@@ -141,6 +141,8 @@ void initLights(void);
 
  // Render objects as filled polygons (1) or wireframes (0). Default filled.
 int renderFillEnabled = 1;
+float objectLocation[3] = { 0.0f, 0.0f, 0.0f }; // X, Y, Z
+const float moveSpeed = 1.0f;
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -495,6 +497,8 @@ void think(void)
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
+		objectLocation[1] += keyboardMotion.Heave * moveSpeed * FRAME_TIME_SEC;
+
 	}
 }
 
