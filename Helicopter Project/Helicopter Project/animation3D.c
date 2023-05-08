@@ -142,8 +142,10 @@ void basicGround(void);
 //hierachical model functions to position and scale parts
 void drawHelicopter();
 void drawSkids(void);
+void drawBody(void);
 void drawWindshield(void);
 void drawWindow(enum Side side);
+void drawRotors(void);
 
 
 /******************************************************************************
@@ -179,6 +181,7 @@ const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
 const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
+const GLfloat POLICE_BLUE[3] = { 0.0f, 0.0f, 0.40f };
 
 
 //model animation variables (position, heading, speed (metres per second))
@@ -695,7 +698,7 @@ void drawHelicopter()
 	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 	glTranslated(helicopterLocation[0], helicopterLocation[1], helicopterLocation[2]);
 
-	glColor3fv(CREAM);
+	glColor3fv(POLICE_BLUE);
 	gluSphere(sphereQuadric, BODY_RADIUS, 50, 50);
 
 	drawSkids();
