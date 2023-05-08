@@ -135,14 +135,59 @@ void init(void);
 void think(void);
 void initLights(void);
 
+void drawOrigin(void);
+void basicGround(void);
+
+
+//hierachical model functions to position and scale parts
+void drawHelicopter();
+void drawSkids(void);
+void drawWindshield(void);
+void drawWindow(enum Side side);
+
+
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
  ******************************************************************************/
 
  // Render objects as filled polygons (1) or wireframes (0). Default filled.
 int renderFillEnabled = 1;
-float objectLocation[3] = { 0.0f, 0.0f, 0.0f }; // X, Y, Z
+
+//is the object to be drawn on the left (-x) or right (-y)
+enum Side {
+	leftSide = -1,
+	rightSide = 1,
+};
+
+// window dimensions
+GLint windowWidth = 800;
+GLint windowHeight = 600;
+
+// current camera position
+GLfloat cameraPosition[] = { 0, 1, 12 };
+
+// pointer to quadric objects
+GLUquadricObj* sphereQuadric;
+GLUquadricObj* cylinderQuadric;
+
+//hierachical model setup values
+
+#define BODY_RADIUS 1.0
+
+
+const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
+const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
+const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
+const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
+
+
+//model animation variables (position, heading, speed (metres per second))
+float helicopterLocation[] = { 0.0f, 1.0f, 0.0f }; // X, Y, Z
+float helicopterFacing = 0.0f;
 const float moveSpeed = 1.0f;
+
+
+//heading 0 is facing forwards looking at you!
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -201,7 +246,35 @@ void display(void)
 		Function Prototypes" section near the top of this template.
 	*/
 
+	// clear the screen and depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// load the identity matrix into the model view matrix
+	glLoadIdentity();
+
+	cameraPosition[1] = helicopterLocation[1]; //track bird on heave only
+
+	//set up our camera - slightly up in the y so we can see the ground plane
+	gluLookAt(cameraPosition[0], cameraPosition[1] + 5.0f, cameraPosition[2],
+		helicopterLocation[0], helicopterLocation[1], helicopterLocation[2],
+		0, 1, 0);
+
+	drawOrigin();
+
+	//draw the ground
+	basicGround();
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	//only apply the transforms inside the push/pop to the scene objects other than origin marker
+
+	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
+	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
+
+	drawHelicopter();
+
+	// swap the drawing buffers
+	glutSwapBuffers();
 
 }
 
@@ -210,6 +283,19 @@ void display(void)
 */
 void reshape(int width, int h)
 {
+	windowHeight = h;
+	windowWidth = width;
+
+	glViewport(0, 0, windowWidth, windowHeight);
+
+	glMatrixMode(GL_PROJECTION);
+
+	glLoadIdentity();
+
+	gluPerspective(60, (float)windowWidth / (float)windowHeight, 1.0, 20.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
 /*
@@ -259,6 +345,8 @@ void keyPressed(unsigned char key, int x, int y)
 		renderFillEnabled = !renderFillEnabled;
 		break;
 	case KEY_EXIT:
+		gluDeleteQuadric(sphereQuadric);
+		gluDeleteQuadric(cylinderQuadric);
 		exit(0);
 		break;
 	}
@@ -430,9 +518,21 @@ void idle(void)
  */
 void init(void)
 {
+	// enable depth testing
+	glEnable(GL_DEPTH_TEST);
+
+	// set background color to be black
+	glClearColor(0, 0, 0, 1.0);
+	
 	initLights();
 
 	// Anything that relies on lighting or specifies normals must be initialised after initLights.
+	
+	//create the quadric for drawing the sphere
+	sphereQuadric = gluNewQuadric();
+
+	//create the quadric for drawing the cylinder
+	cylinderQuadric = gluNewQuadric();
 }
 
 /*
@@ -491,6 +591,7 @@ void think(void)
 	*/
 	if (keyboardMotion.Yaw != MOTION_NONE) {
 		/* TEMPLATE: Turn your object right (clockwise) if .Yaw < 0, or left (anticlockwise) if .Yaw > 0 */
+		helicopterFacing += 90.0f * FRAME_TIME_SEC * keyboardMotion.Yaw; //90 RPM
 	}
 	if (keyboardMotion.Surge != MOTION_NONE) {
 		/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
@@ -500,8 +601,7 @@ void think(void)
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
-		objectLocation[1] += keyboardMotion.Heave * moveSpeed * FRAME_TIME_SEC;
-
+		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed * FRAME_TIME_SEC;
 	}
 }
 
@@ -540,5 +640,96 @@ void initLights(void)
 	// Enable use of simple GL colours as materials.
 	glEnable(GL_COLOR_MATERIAL);
 }
+
+void drawOrigin(void)
+{
+	glColor3f(0.0f, 1.0f, 1.0f);
+	glutWireSphere(0.1, 10, 10);
+
+	glBegin(GL_LINES);
+
+	//x axis -red
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(2.0f, 0.0f, 0.0f);
+
+	//y axis -green
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 2.0f, 0.0f);
+
+	//z axis - blue
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 2.0f);
+
+	glEnd();
+}
+
+/*
+  A simple ground plane in the XZ plane with vertex normals specified for lighting
+  the top face of the ground. The bottom face is not lit.
+*/
+void basicGround(void)
+{
+	glColor3fv(PALE_GREEN); //pale green -- better to have a const
+	glBegin(GL_QUADS);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(-5.0f, 0.0f, -5.0f);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(-5.0f, 0.0f, 5.0f);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(5.0f, 0.0f, 5.0f);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(5.0f, 0.0f, -5.0f);
+	glEnd();
+}
+
+
+void drawHelicopter()
+{
+
+	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
+
+	glPushMatrix();
+	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
+	glTranslated(helicopterLocation[0], helicopterLocation[1], helicopterLocation[2]);
+
+	glColor3fv(CREAM);
+	gluSphere(sphereQuadric, BODY_RADIUS, 50, 50);
+
+	drawSkids();
+	drawWindow(rightSide);
+	drawWindow(leftSide);
+
+	glPopMatrix();
+}
+
+void drawSkids(void)
+{
+	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
+
+	glColor3fv(BROWN);
+
+	glPushMatrix();
+
+
+
+	glPopMatrix();
+}
+
+void drawWindow(enum Side side) {
+
+	glColor3fv(BATMAN_GREY);
+
+	glPushMatrix();
+
+
+
+	glPopMatrix();
+
+}
+
+
 
 /******************************************************************************/
