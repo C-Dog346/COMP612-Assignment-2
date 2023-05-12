@@ -106,6 +106,9 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 #define KEY_MOVE_RIGHT		'd'
 #define KEY_RENDER_FILL		'l'
 #define KEY_EXIT			27 // Escape key.
+#define DEBUG_CAMERA_DEFAULT'1'
+#define DEBUG_CAMERA_FRONT	'2'
+#define DEBUG_CAMERA_TOP	'3'
 
 // Define all GLUT special keys used for input (add any new key definitions here).
 
@@ -141,8 +144,8 @@ void basicGround(void);
 
 //hierachical model functions to position and scale parts
 void drawHelicopter();
-void drawSkids(void);
 void drawBody(void);
+void drawSkid(enum Side side);
 void drawWindshield(void);
 void drawWindow(enum Side side);
 void drawRotors(void);
@@ -166,15 +169,19 @@ GLint windowWidth = 800;
 GLint windowHeight = 600;
 
 // current camera position
-GLfloat cameraPosition[] = { 0, 1, 12 };
+GLfloat cameraPosition[] = { 0.0f, 6.0f, 12.0f };
+float cameraOffset = 5.0f;
 
 // pointer to quadric objects
 GLUquadricObj* sphereQuadric;
 GLUquadricObj* cylinderQuadric;
 
 //hierachical model setup values
+#define BODY_RADIUS 2.0
 
-#define BODY_RADIUS 1.0
+#define SKIDS_Y -2.0
+#define SKIDS_X -1.0
+#define SKIDS_Z 0.0
 
 
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
@@ -182,10 +189,11 @@ const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
 const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
 const GLfloat POLICE_BLUE[3] = { 0.0f, 0.0f, 0.40f };
+const GLfloat BLACK[3] = { 0.0f, 0.0f, 0.0f };
 
 
 //model animation variables (position, heading, speed (metres per second))
-float helicopterLocation[] = { 0.0f, 1.0f, 0.0f }; // X, Y, Z
+float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 1.0f;
 
@@ -255,10 +263,10 @@ void display(void)
 	// load the identity matrix into the model view matrix
 	glLoadIdentity();
 
-	cameraPosition[1] = helicopterLocation[1]; //track bird on heave only
+	cameraPosition[1] = helicopterLocation[1] + cameraOffset; //track bird on heave only
 
 	//set up our camera - slightly up in the y so we can see the ground plane
-	gluLookAt(cameraPosition[0], cameraPosition[1] + 5.0f, cameraPosition[2],
+	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],
 		helicopterLocation[0], helicopterLocation[1], helicopterLocation[2],
 		0, 1, 0);
 
@@ -351,6 +359,15 @@ void keyPressed(unsigned char key, int x, int y)
 		gluDeleteQuadric(sphereQuadric);
 		gluDeleteQuadric(cylinderQuadric);
 		exit(0);
+		break;
+	case DEBUG_CAMERA_DEFAULT:
+		cameraOffset = 5.0f;
+		break;
+	case DEBUG_CAMERA_FRONT:
+		cameraOffset = 0.0f;
+		break;
+	case DEBUG_CAMERA_TOP:
+		cameraOffset = 100.0f;
 		break;
 	}
 }
@@ -695,31 +712,37 @@ void drawHelicopter()
 	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
 
 	glPushMatrix();
-	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 	glTranslated(helicopterLocation[0], helicopterLocation[1], helicopterLocation[2]);
+	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 
 	glColor3fv(POLICE_BLUE);
 	gluSphere(sphereQuadric, BODY_RADIUS, 50, 50);
 
-	drawSkids();
-	drawWindow(rightSide);
-	drawWindow(leftSide);
+	drawSkid(rightSide);
+	drawSkid(leftSide);
+	/*drawWindow(rightSide);
+	drawWindow(leftSide);*/
 
 	glPopMatrix();
 }
 
-void drawSkids(void)
+void drawSkid(enum Side side)
 {
 	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
 
 	glColor3fv(BROWN);
 
 	glPushMatrix();
-
-
+	glTranslated(SKIDS_X, SKIDS_Y, SKIDS_Z);
+	gluCylinder(cylinderQuadric, 0.2, 0.2, 3, 50, 50);
 
 	glPopMatrix();
 }
+
+
+
+
+
 
 void drawWindow(enum Side side) {
 
