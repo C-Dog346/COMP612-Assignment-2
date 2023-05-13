@@ -100,16 +100,17 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 // Note: USE ONLY LOWERCASE CHARACTERS HERE. The keyboard handler provided converts all
 // characters typed by the user to lowercase, so the SHIFT key is ignored.
 
-#define KEY_MOVE_FORWARD		'w'
-#define KEY_MOVE_BACKWARD		's'
-#define KEY_MOVE_LEFT			'a'
-#define KEY_MOVE_RIGHT			'd'
-#define KEY_RENDER_FILL			'l'
-#define KEY_EXIT				27 // Escape key.
-#define DEBUG_CAMERA_DEFAULT	'1'
-#define DEBUG_CAMERA_FRONT		'2'
-#define DEBUG_CAMERA_TOP		'3'
-#define DEBUG_CAMERA_LOW		'4'
+#define KEY_MOVE_FORWARD				'w'
+#define KEY_MOVE_BACKWARD				's'
+#define KEY_MOVE_LEFT					'a'
+#define KEY_MOVE_RIGHT					'd'
+#define KEY_RENDER_FILL					'l'
+#define KEY_EXIT						27 // Escape key.
+#define DEBUG_CAMERA_DEFAULT			'1'
+#define DEBUG_CAMERA_FRONT				'2'
+#define DEBUG_CAMERA_TOP				'3'
+#define DEBUG_CAMERA_LOW				'4'
+#define DEBUG_CAMERA_DEFAULT_ZOOM_OUT	'5'
 
 // Define all GLUT special keys used for input (add any new key definitions here).
 
@@ -146,7 +147,9 @@ void basicGround(void);
 //hierachical model functions to position and scale parts
 void drawHelicopter();
 void drawBody(void);
+void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
+void drawSkidEnding(enum Side xSide, enum Side zSide);
 void drawWindshield(void);
 void drawWindow(enum Side side);
 void drawRotors(void);
@@ -163,6 +166,8 @@ int renderFillEnabled = 1;
 enum Side {
 	leftSide = -1,
 	rightSide = 1,
+	frontSide = 1,
+	backSide = -1,
 };
 
 // window dimensions
@@ -176,14 +181,28 @@ float cameraOffset[] = { 0.0f, 5.0f, 0.0f };
 // pointer to quadric objects
 GLUquadricObj* sphereQuadric;
 GLUquadricObj* cylinderQuadric;
+GLUquadricObj* cubeQuadric;
 
-//hierachical model setup values
+
+// hierachical model setup values
+
+// helicopter
+// body
 #define BODY_RADIUS 2.0
 
-#define SKIDS_Y -2.0
-#define SKIDS_X -1.0
-#define SKIDS_Z 0.0
+// skid connectors
+#define SKID_CONNECTOR_RADIUS BODY_RADIUS / 10.0
+#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 1.5
 
+// skids
+#define SKID_RADIUS BODY_RADIUS / 10.0
+#define SKID_LENGTH BODY_RADIUS * 3.0
+
+// skid endings
+#define SKID_ENDING_RADIUS SKID_RADIUS
+
+// wind shield
+#define WINDSHIELD_SIZE 2.0
 
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
@@ -191,6 +210,8 @@ const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
 const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
 const GLfloat POLICE_BLUE[3] = { 0.0f, 0.0f, 0.40f };
 const GLfloat BLACK[3] = { 0.0f, 0.0f, 0.0f };
+const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
+
 
 
 //model animation variables (position, heading, speed (metres per second))
@@ -377,6 +398,11 @@ void keyPressed(unsigned char key, int x, int y)
 		break;
 	case DEBUG_CAMERA_LOW:
 		cameraOffset[1] = -2.0f;
+		cameraOffset[2] = 0.0f;
+		break;
+	case DEBUG_CAMERA_DEFAULT_ZOOM_OUT:
+		cameraOffset[1] = 5.0f;
+		cameraOffset[2] = 5.0f;
 		break;
 	}
 }
@@ -562,6 +588,9 @@ void init(void)
 
 	//create the quadric for drawing the cylinder
 	cylinderQuadric = gluNewQuadric();
+
+	// create the quadric for drawing the cube
+	cubeQuadric = gluNewQuadric();
 }
 
 /*
@@ -727,10 +756,50 @@ void drawHelicopter()
 	glColor3fv(POLICE_BLUE);
 	gluSphere(sphereQuadric, BODY_RADIUS, 50, 50);
 
+	drawWindshield();
+
+	drawSkidConnector(leftSide);
+	drawSkidConnector(rightSide);
+
 	drawSkid(rightSide);
 	drawSkid(leftSide);
 	/*drawWindow(rightSide);
 	drawWindow(leftSide);*/
+
+	drawRotors();
+
+	glPopMatrix();
+}
+
+void drawWindshield(void)
+{
+	glColor3fv(LIGHT_CYAN);
+
+	glPushMatrix();
+
+	glTranslated(0.0, 0.4, 1.1);
+	glRotated(40, 1, 0, 0);
+	glScaled(0.9, 1.0, 1.0);
+	glutSolidCube(WINDSHIELD_SIZE);
+
+	glPopMatrix();
+}
+
+void drawSkidConnector(enum Side side)
+{
+	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
+
+	glColor3fv(BROWN);
+
+	glPushMatrix();
+
+	// move to the left or right, into position 
+	glTranslated(-BODY_RADIUS / 2 * side, 0, 0);
+
+	// connector poles
+	glTranslated(2.0 * side, 0.0, 0.0);
+	glRotated(90, 1.0, 0.0, 0.0);
+	gluCylinder(cylinderQuadric, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_LENGTH, 50, 50);
 
 	glPopMatrix();
 }
@@ -742,16 +811,31 @@ void drawSkid(enum Side side)
 	glColor3fv(BROWN);
 
 	glPushMatrix();
-	glTranslated(SKIDS_X, SKIDS_Y, SKIDS_Z);
-	gluCylinder(cylinderQuadric, 0.2, 0.2, 3, 50, 50);
+
+	// move to correct position for middle of skid
+	glTranslated(-BODY_RADIUS / 2 * side, -BODY_RADIUS * 1.5, -BODY_RADIUS * 1.5);
+
+	// skid
+	gluCylinder(cylinderQuadric, SKID_RADIUS, SKID_RADIUS, SKID_LENGTH, 50, 50);
+
+	// skid endings
+	drawSkidEnding(side, frontSide);
+	drawSkidEnding(side, backSide);
 
 	glPopMatrix();
 }
 
+void drawSkidEnding(enum Side xSide, enum Side zSide)
+{
+	glPushMatrix();
+	
+	// stay or move to the front
+	glTranslated(0, 0, zSide == frontSide ? SKID_LENGTH : 0);
+	// ball
+	gluSphere(sphereQuadric, SKID_ENDING_RADIUS, 50, 50);
 
-
-
-
+	glPopMatrix();
+}
 
 void drawWindow(enum Side side) {
 
@@ -760,11 +844,22 @@ void drawWindow(enum Side side) {
 	glPushMatrix();
 
 
+//	glutSolidCube(WINDSCREEN_);
 
 	glPopMatrix();
 
 }
 
+void drawRotors(void) 
+{
+	glPushMatrix();
 
+	// stay or move to the front
+	glTranslated(0, 0, zSide == frontSide ? SKID_LENGTH : 0);
+	// ball
+	gluSphere(sphereQuadric, SKID_ENDING_RADIUS, 50, 50);
+
+	glPopMatrix();
+}
 
 /******************************************************************************/
