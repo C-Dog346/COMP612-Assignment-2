@@ -100,15 +100,16 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 // Note: USE ONLY LOWERCASE CHARACTERS HERE. The keyboard handler provided converts all
 // characters typed by the user to lowercase, so the SHIFT key is ignored.
 
-#define KEY_MOVE_FORWARD	'w'
-#define KEY_MOVE_BACKWARD	's'
-#define KEY_MOVE_LEFT		'a'
-#define KEY_MOVE_RIGHT		'd'
-#define KEY_RENDER_FILL		'l'
-#define KEY_EXIT			27 // Escape key.
-#define DEBUG_CAMERA_DEFAULT'1'
-#define DEBUG_CAMERA_FRONT	'2'
-#define DEBUG_CAMERA_TOP	'3'
+#define KEY_MOVE_FORWARD		'w'
+#define KEY_MOVE_BACKWARD		's'
+#define KEY_MOVE_LEFT			'a'
+#define KEY_MOVE_RIGHT			'd'
+#define KEY_RENDER_FILL			'l'
+#define KEY_EXIT				27 // Escape key.
+#define DEBUG_CAMERA_DEFAULT	'1'
+#define DEBUG_CAMERA_FRONT		'2'
+#define DEBUG_CAMERA_TOP		'3'
+#define DEBUG_CAMERA_LOW		'4'
 
 // Define all GLUT special keys used for input (add any new key definitions here).
 
@@ -169,8 +170,8 @@ GLint windowWidth = 800;
 GLint windowHeight = 600;
 
 // current camera position
-GLfloat cameraPosition[] = { 0.0f, 6.0f, 12.0f };
-float cameraOffset = 5.0f;
+GLfloat cameraPosition[] = { 0.0f, 5.0f, 12.0f };
+float cameraOffset[] = { 0.0f, 5.0f, 0.0f };
 
 // pointer to quadric objects
 GLUquadricObj* sphereQuadric;
@@ -263,7 +264,9 @@ void display(void)
 	// load the identity matrix into the model view matrix
 	glLoadIdentity();
 
-	cameraPosition[1] = helicopterLocation[1] + cameraOffset; //track bird on heave only
+	cameraPosition[0] = 0.0f + cameraOffset[0];
+	cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+	cameraPosition[2] = 12.0f + cameraOffset[2];
 
 	//set up our camera - slightly up in the y so we can see the ground plane
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],
@@ -303,7 +306,7 @@ void reshape(int width, int h)
 
 	glLoadIdentity();
 
-	gluPerspective(60, (float)windowWidth / (float)windowHeight, 1.0, 20.0);
+	gluPerspective(60, (float)windowWidth / (float)windowHeight, 1.0, 500.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -361,13 +364,19 @@ void keyPressed(unsigned char key, int x, int y)
 		exit(0);
 		break;
 	case DEBUG_CAMERA_DEFAULT:
-		cameraOffset = 5.0f;
+		cameraOffset[1] = 5.0f; 
+		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_FRONT:
-		cameraOffset = 0.0f;
+		cameraOffset[1] = 0.0f;
+		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_TOP:
-		cameraOffset = 100.0f;
+		cameraOffset[1] = 10.0f;
+		cameraOffset[2] = -11.99f;
+		break;
+	case DEBUG_CAMERA_LOW:
+		cameraOffset[1] = -2.0f;
 		break;
 	}
 }
