@@ -16,6 +16,7 @@
 #include <Windows.h>
 #include <freeglut.h>
 #include <math.h>
+#include <stdio.h>
 
  /******************************************************************************
   * Animation & Timing Setup
@@ -153,6 +154,7 @@ void drawSkidEnding(enum Side xSide, enum Side zSide);
 void drawWindshield(void);
 void drawWindow(enum Side side);
 void drawRotors(void);
+void drawBlade(int num);
 
 
 /******************************************************************************
@@ -181,7 +183,6 @@ float cameraOffset[] = { 0.0f, 5.0f, 0.0f };
 // pointer to quadric objects
 GLUquadricObj* sphereQuadric;
 GLUquadricObj* cylinderQuadric;
-GLUquadricObj* cubeQuadric;
 
 
 // hierachical model setup values
@@ -204,6 +205,12 @@ GLUquadricObj* cubeQuadric;
 // wind shield
 #define WINDSHIELD_SIZE 2.0
 
+// rotors
+#define ROTOR_CUBE_SIZE 0.8
+#define ROTOR_BLADE_SIZE 4.0
+#define NUMBER_OF_BLADES 4
+#define ROTOR_SPEED 10.0
+
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
@@ -218,6 +225,7 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 1.0f;
+float rotorSpin = 0;
 
 
 //heading 0 is facing forwards looking at you!
@@ -588,9 +596,6 @@ void init(void)
 
 	//create the quadric for drawing the cylinder
 	cylinderQuadric = gluNewQuadric();
-
-	// create the quadric for drawing the cube
-	cubeQuadric = gluNewQuadric();
 }
 
 /*
@@ -661,6 +666,11 @@ void think(void)
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
 		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed * FRAME_TIME_SEC;
 	}
+
+	if (rotorSpin > 90)
+		rotorSpin = 0;
+
+	rotorSpin += ROTOR_SPEED;
 }
 
 /*
@@ -777,9 +787,13 @@ void drawWindshield(void)
 
 	glPushMatrix();
 
+	// move forwards and up
 	glTranslated(0.0, 0.4, 1.1);
+	// rotate
 	glRotated(40, 1, 0, 0);
+	// aim to make the windshield look slightly longer than wide
 	glScaled(0.9, 1.0, 1.0);
+	// cube acting as windshield
 	glutSolidCube(WINDSHIELD_SIZE);
 
 	glPopMatrix();
@@ -855,9 +869,29 @@ void drawRotors(void)
 	glPushMatrix();
 
 	// stay or move to the front
-	glTranslated(0, 0, zSide == frontSide ? SKID_LENGTH : 0);
-	// ball
-	gluSphere(sphereQuadric, SKID_ENDING_RADIUS, 50, 50);
+	glTranslated(0.0, BODY_RADIUS + 0.2, 0.0);
+	// blades
+	for (int i = 1; i < NUMBER_OF_BLADES+1; i++)
+	{
+		drawBlade(i);
+	}
+	glScaled(0.2, 1.0, 0.2);
+	glutSolidCube(ROTOR_CUBE_SIZE);
+	glPopMatrix();
+}
+
+void drawBlade(int num)
+{
+	glPushMatrix();
+
+	// stay or move to the front
+	glTranslated(0.0, ROTOR_CUBE_SIZE/2 - 0.2, 0.0);
+	// rotate based on which blade
+	glRotated(360 / NUMBER_OF_BLADES * num + rotorSpin, 0.0, 1.0, 0.0);
+	// flatten cube to make it look like a blade
+	glScaled(1.0, 0.02, 0.1);
+	// blade
+	glutSolidCube(ROTOR_BLADE_SIZE);
 
 	glPopMatrix();
 }
