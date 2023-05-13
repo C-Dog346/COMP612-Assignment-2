@@ -788,9 +788,7 @@ void drawWindshield(void)
 	glPushMatrix();
 
 	// move forwards and up
-	glTranslated(0.0, 0.4, 1.1);
-	// rotate
-	glRotated(40, 1, 0, 0);
+	glTranslated(0.0, 0.4, 1.02);
 	// aim to make the windshield look slightly longer than wide
 	glScaled(0.9, 1.0, 1.0);
 	// cube acting as windshield
