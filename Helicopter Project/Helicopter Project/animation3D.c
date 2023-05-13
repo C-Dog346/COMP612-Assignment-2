@@ -153,9 +153,11 @@ void drawSkid(enum Side side);
 void drawSkidEnding(enum Side xSide, enum Side zSide);
 void drawWindshield(void);
 void drawWindow(enum Side side);
-void drawRotors(void);
+void drawTopRotors(void);
 void drawBlade(int num);
-
+void drawTail(void);
+void drawTailRotors(void);
+void drawTailFin(void);
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -205,11 +207,16 @@ GLUquadricObj* cylinderQuadric;
 // wind shield
 #define WINDSHIELD_SIZE 2.0
 
-// rotors
+// top rotors
 #define ROTOR_CUBE_SIZE 0.8
 #define ROTOR_BLADE_SIZE 4.0
 #define NUMBER_OF_BLADES 4
 #define ROTOR_SPEED 10.0
+
+// tail
+#define TAIL_BASE 1.0
+#define TAIL_LENGTH 6.5
+#define TAIL_TIP 0.25
 
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
@@ -776,7 +783,8 @@ void drawHelicopter()
 	/*drawWindow(rightSide);
 	drawWindow(leftSide);*/
 
-	drawRotors();
+	drawTopRotors();
+	drawTail();
 
 	glPopMatrix();
 }
@@ -862,7 +870,7 @@ void drawWindow(enum Side side) {
 
 }
 
-void drawRotors(void) 
+void drawTopRotors(void) 
 {
 	glPushMatrix();
 
@@ -892,6 +900,45 @@ void drawBlade(int num)
 	glutSolidCube(ROTOR_BLADE_SIZE);
 
 	glPopMatrix();
+}
+
+void drawTail(void)
+{
+	glPushMatrix();
+
+	glColor3fv(POLICE_BLUE);
+	
+	drawTailRotors();
+	glRotated(180, 1.0, 0.0, 0.0);
+	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP, TAIL_LENGTH, 20, 20);
+	glTranslated(0.0, 0.0, TAIL_LENGTH);
+	gluSphere(sphereQuadric, TAIL_TIP, 50, 50);
+
+	glPopMatrix();
+}
+
+void drawTailRotors(void)
+{
+	glColor3fv(BROWN);
+
+	glPushMatrix();
+
+	glRotated(180, 1.0, 1.0, 0.0);
+	glTranslated(0.0, TAIL_TIP, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
+	// blades
+	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
+	{
+		drawBlade(i);
+	}
+	glScaled(0.2, 1.0, 0.2);
+	glutSolidCube(ROTOR_CUBE_SIZE);
+	glTranslated(0.0, ROTOR_CUBE_SIZE / 2 - 0.2, 0.0);
+	glPopMatrix();
+}
+
+void drawTailFin(void)
+{
+
 }
 
 /******************************************************************************/
