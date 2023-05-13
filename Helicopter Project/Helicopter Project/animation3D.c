@@ -218,6 +218,8 @@ GLUquadricObj* cylinderQuadric;
 #define TAIL_LENGTH 6.5
 #define TAIL_TIP 0.25
 
+#define PI 3.1415
+
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
@@ -665,9 +667,19 @@ void think(void)
 	}
 	if (keyboardMotion.Surge != MOTION_NONE) {
 		/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
+		float xMove = sinf(helicopterFacing * (PI / 180)) * 10;
+		float zMove = cosf(helicopterFacing * (PI / 180)) * 10;
+
+		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
+		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
 	}
 	if (keyboardMotion.Sway != MOTION_NONE) {
 		/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
+		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * 10;
+		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * 10;
+
+		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
@@ -903,12 +915,13 @@ void drawBlade(int num)
 }
 
 void drawTail(void)
-{
-	glPushMatrix();
-
-	glColor3fv(POLICE_BLUE);
+{	
+	glPushMatrix();	
 	
 	drawTailRotors();
+	
+	glColor3fv(POLICE_BLUE);
+
 	glRotated(180, 1.0, 0.0, 0.0);
 	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP, TAIL_LENGTH, 20, 20);
 	glTranslated(0.0, 0.0, TAIL_LENGTH);
@@ -925,6 +938,7 @@ void drawTailRotors(void)
 
 	glRotated(180, 1.0, 1.0, 0.0);
 	glTranslated(0.0, TAIL_TIP, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
+
 	// blades
 	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
 	{
