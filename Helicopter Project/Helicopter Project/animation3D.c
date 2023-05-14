@@ -107,6 +107,7 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 #define KEY_MOVE_RIGHT					'd'
 #define KEY_RENDER_FILL					'l'
 #define KEY_EXIT						27 // Escape key.
+#define DEBUG_CAMERA					'`'
 #define DEBUG_CAMERA_DEFAULT			'1'
 #define DEBUG_CAMERA_FRONT				'2'
 #define DEBUG_CAMERA_TOP				'3'
@@ -146,9 +147,8 @@ void basicGround(void);
 void drawGround(void);
 
 
-//hierachical model functions to position and scale parts
+// hierarchical model functions to position and scale parts
 void drawHelicopter();
-void drawBody(void);
 void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
 void drawSkidEnding(enum Side xSide, enum Side zSide);
@@ -159,6 +159,9 @@ void drawBlade(int num);
 void drawTail(void);
 void drawTailRotors(void);
 void drawTailFin(void);
+
+// camera
+void updateCameraPos(void);
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -181,7 +184,9 @@ GLint windowHeight = 600;
 
 // current camera position
 GLfloat cameraPosition[] = { 0.0f, 5.0f, 12.0f };
-float cameraOffset[] = { 0.0f, 5.0f, 0.0f };
+float cameraOffset[] = { 0.0f, 7.5f, 0.0f };
+// camera debug
+int debug = 0;
 
 // pointer to quadric objects
 GLUquadricObj* sphereQuadric;
@@ -212,17 +217,21 @@ GLUquadricObj* cylinderQuadric;
 #define ROTOR_CUBE_SIZE 0.8
 #define ROTOR_BLADE_SIZE 4.0
 #define NUMBER_OF_BLADES 4
-#define ROTOR_SPEED 10.0
+#define ROTOR_SPEED 750.0
 
 // tail
 #define TAIL_BASE 1.0
 #define TAIL_LENGTH 6.5
 #define TAIL_TIP 0.25
+#define TAIL_ROTORS_SCALE_FACTOR 0.45
 
 #define GRID_SQUARE_SIZE 1.0f
 #define GRID_SIZE 100.0f
 
 #define PI 3.1415
+
+// camera distance
+#define CAMERA_DISTANCE 15.0
 
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
@@ -237,8 +246,8 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 //model animation variables (position, heading, speed (metres per second))
 float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
-const float moveSpeed = 1.0f;
-float rotorSpin = 0;
+const float moveSpeed = 10.0f;
+float rotorSpin = 1;
 
 
 //heading 0 is facing forwards looking at you!
@@ -305,10 +314,6 @@ void display(void)
 
 	// load the identity matrix into the model view matrix
 	glLoadIdentity();
-
-	cameraPosition[0] = 0.0f + cameraOffset[0];
-	cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
-	cameraPosition[2] = 12.0f + cameraOffset[2];
 
 	//set up our camera - slightly up in the y so we can see the ground plane
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],
@@ -389,7 +394,7 @@ void keyPressed(unsigned char key, int x, int y)
 		motionKeyStates.MoveRight = KEYSTATE_DOWN;
 		keyboardMotion.Sway = MOTION_RIGHT;
 		break;
-
+	
 		/*
 			Other Keyboard Functions (add any new character key controls here)
 
@@ -406,6 +411,18 @@ void keyPressed(unsigned char key, int x, int y)
 		gluDeleteQuadric(cylinderQuadric);
 		exit(0);
 		break;
+	case DEBUG_CAMERA:
+		debug = debug ? 0 : 1;
+		if (debug)
+		{
+			cameraOffset[0] = 0.0f;
+			cameraOffset[1] = 5.0f;
+			cameraOffset[2] = 0.0f;
+			cameraPosition[0] = 0.0f + cameraOffset[0];
+			cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+			cameraPosition[2] = 12.0f + cameraOffset[2];
+		}
+		break;
 	case DEBUG_CAMERA_DEFAULT:
 		cameraOffset[1] = 5.0f; 
 		cameraOffset[2] = 0.0f;
@@ -415,7 +432,7 @@ void keyPressed(unsigned char key, int x, int y)
 		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_TOP:
-		cameraOffset[1] = 10.0f;
+		cameraOffset[1] = 20.0f;
 		cameraOffset[2] = -11.99f;
 		break;
 	case DEBUG_CAMERA_LOW:
@@ -672,29 +689,32 @@ void think(void)
 	}
 	if (keyboardMotion.Surge != MOTION_NONE) {
 		/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
-		float xMove = sinf(helicopterFacing * (PI / 180)) * 10;
-		float zMove = cosf(helicopterFacing * (PI / 180)) * 10;
+		float xMove = sinf(helicopterFacing * (PI / 180)) * moveSpeed;
+		float zMove = cosf(helicopterFacing * (PI / 180)) * moveSpeed;
 
 		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
 		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
 	}
 	if (keyboardMotion.Sway != MOTION_NONE) {
 		/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
-		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * 10;
-		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * 10;
+		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
+		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
 
-		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
-		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+		helicopterLocation[0] -= xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+		helicopterLocation[2] -= zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
-		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed * FRAME_TIME_SEC;
+		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
 	}
 
+	// rotor spin
 	if (rotorSpin > 90)
 		rotorSpin = 0;
 
-	rotorSpin += ROTOR_SPEED;
+	rotorSpin += ROTOR_SPEED * FRAME_TIME_SEC;
+
+	updateCameraPos();
 }
 
 /*
@@ -731,6 +751,22 @@ void initLights(void)
 
 	// Enable use of simple GL colours as materials.
 	glEnable(GL_COLOR_MATERIAL);
+}
+
+void updateCameraPos(void)
+{
+	if (debug) {
+		cameraPosition[0] = 0.0f + cameraOffset[0];
+		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+		cameraPosition[2] = 12.0f + cameraOffset[2];
+	}
+	else
+	{
+		cameraPosition[0] = helicopterLocation[0] - sinf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
+		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+		cameraPosition[2] = helicopterLocation[2] - cosf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
+	}
+
 }
 
 void drawOrigin(void)
@@ -802,6 +838,7 @@ void drawGround(void)
 
 	glEnd();
 }
+
 
 
 void drawHelicopter()
@@ -968,16 +1005,17 @@ void drawTailRotors(void)
 	glPushMatrix();
 
 	glRotated(180, 1.0, 1.0, 0.0);
-	glTranslated(0.0, TAIL_TIP, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
+	glTranslated(0.0, TAIL_TIP * 1.25, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
 
+	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
 	// blades
 	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
 	{
 		drawBlade(i);
 	}
-	glScaled(0.2, 1.0, 0.2);
+	glScaled(0.2, 1.0 , 0.2);
 	glutSolidCube(ROTOR_CUBE_SIZE);
-	glTranslated(0.0, ROTOR_CUBE_SIZE / 2 - 0.2, 0.0);
+
 	glPopMatrix();
 }
 
@@ -985,5 +1023,7 @@ void drawTailFin(void)
 {
 
 }
+
+
 
 /******************************************************************************/
