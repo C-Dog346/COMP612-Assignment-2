@@ -143,6 +143,7 @@ void initLights(void);
 
 void drawOrigin(void);
 void basicGround(void);
+void drawGround(void);
 
 
 //hierachical model functions to position and scale parts
@@ -217,6 +218,9 @@ GLUquadricObj* cylinderQuadric;
 #define TAIL_BASE 1.0
 #define TAIL_LENGTH 6.5
 #define TAIL_TIP 0.25
+
+#define GRID_SQUARE_SIZE 1.0f
+#define GRID_SIZE 100.0f
 
 #define PI 3.1415
 
@@ -314,7 +318,8 @@ void display(void)
 	drawOrigin();
 
 	//draw the ground
-	basicGround();
+	//basicGround();
+	drawGround();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -769,6 +774,32 @@ void basicGround(void)
 	glVertex3f(5.0f, 0.0f, 5.0f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
 	glVertex3f(5.0f, 0.0f, -5.0f);
+	glEnd();
+}
+
+void drawGround(void)
+{
+	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
+	
+	glColor3fv(PALE_GREEN); //pale green -- better to have a const
+	glBegin(GL_QUADS);
+
+	for (int y = 0; y < 1; y++)
+	{
+		for (int x = 0; x < 1; x++)
+		{
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(-(GRID_SQUARE_SIZE / 2), -(GRID_SQUARE_SIZE / 2));
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(-(GRID_SQUARE_SIZE / 2), 0.0f, GRID_SQUARE_SIZE / 2);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(GRID_SQUARE_SIZE / 2, 0.0f, GRID_SQUARE_SIZE / 2);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(GRID_SQUARE_SIZE / 2, 0.0f, -(GRID_SQUARE_SIZE / 2));
+		}
+	}
+	
+
 	glEnd();
 }
 
