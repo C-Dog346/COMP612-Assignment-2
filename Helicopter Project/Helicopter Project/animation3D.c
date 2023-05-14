@@ -145,7 +145,7 @@ void drawOrigin(void);
 void basicGround(void);
 
 
-//hierachical model functions to position and scale parts
+// hierarchical model functions to position and scale parts
 void drawHelicopter();
 void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
@@ -157,6 +157,9 @@ void drawBlade(int num);
 void drawTail(void);
 void drawTailRotors(void);
 void drawTailFin(void);
+
+// camera
+void updateCameraPos(void);
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -210,12 +213,13 @@ GLUquadricObj* cylinderQuadric;
 #define ROTOR_CUBE_SIZE 0.8
 #define ROTOR_BLADE_SIZE 4.0
 #define NUMBER_OF_BLADES 4
-#define ROTOR_SPEED 10.0
+#define ROTOR_SPEED 750.0
 
 // tail
 #define TAIL_BASE 1.0
 #define TAIL_LENGTH 6.5
 #define TAIL_TIP 0.25
+#define TAIL_ROTORS_SCALE_FACTOR 0.45
 
 #define PI 3.1415
 
@@ -232,7 +236,7 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 //model animation variables (position, heading, speed (metres per second))
 float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
-const float moveSpeed = 1.0f;
+const float moveSpeed = 10.0f;
 float rotorSpin = 0;
 
 
@@ -313,8 +317,7 @@ void display(void)
 	drawOrigin();
 
 	//draw the ground
-	//basicGround();
-	drawGround();
+	basicGround();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -410,7 +413,7 @@ void keyPressed(unsigned char key, int x, int y)
 		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_TOP:
-		cameraOffset[1] = 10.0f;
+		cameraOffset[1] = 20.0f;
 		cameraOffset[2] = -11.99f;
 		break;
 	case DEBUG_CAMERA_LOW:
@@ -667,29 +670,32 @@ void think(void)
 	}
 	if (keyboardMotion.Surge != MOTION_NONE) {
 		/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
-		float xMove = sinf(helicopterFacing * (PI / 180)) * 10;
-		float zMove = cosf(helicopterFacing * (PI / 180)) * 10;
+		float xMove = sinf(helicopterFacing * (PI / 180)) * moveSpeed;
+		float zMove = cosf(helicopterFacing * (PI / 180)) * moveSpeed;
 
 		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
 		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
 	}
 	if (keyboardMotion.Sway != MOTION_NONE) {
 		/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
-		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * 10;
-		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * 10;
+		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
+		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
 
 		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
-		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed * FRAME_TIME_SEC;
+		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
 	}
 
+	// rotor spin
 	if (rotorSpin > 90)
 		rotorSpin = 0;
 
-	rotorSpin += ROTOR_SPEED;
+	rotorSpin += ROTOR_SPEED * FRAME_TIME_SEC;
+
+	updateCameraPos();
 }
 
 /*
@@ -938,20 +944,26 @@ void drawTailRotors(void)
 	glPushMatrix();
 
 	glRotated(180, 1.0, 1.0, 0.0);
-	glTranslated(0.0, TAIL_TIP, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
+	glTranslated(0.0, TAIL_TIP * 1.25, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
 
+	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
 	// blades
 	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
 	{
 		drawBlade(i);
 	}
-	glScaled(0.2, 1.0, 0.2);
+	glScaled(0.2, 1.0 , 0.2);
 	glutSolidCube(ROTOR_CUBE_SIZE);
-	glTranslated(0.0, ROTOR_CUBE_SIZE / 2 - 0.2, 0.0);
+
 	glPopMatrix();
 }
 
 void drawTailFin(void)
+{
+
+}
+
+void updateCameraPos(void)
 {
 
 }
