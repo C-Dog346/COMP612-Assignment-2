@@ -147,7 +147,6 @@ void basicGround(void);
 
 //hierachical model functions to position and scale parts
 void drawHelicopter();
-void drawBody(void);
 void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
 void drawSkidEnding(enum Side xSide, enum Side zSide);
@@ -314,7 +313,8 @@ void display(void)
 	drawOrigin();
 
 	//draw the ground
-	basicGround();
+	//basicGround();
+	drawGround();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -771,6 +771,7 @@ void basicGround(void)
 	glVertex3f(5.0f, 0.0f, -5.0f);
 	glEnd();
 }
+
 
 
 void drawHelicopter()
