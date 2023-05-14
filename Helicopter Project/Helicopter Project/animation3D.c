@@ -815,28 +815,34 @@ void basicGround(void)
 
 void drawGround(void)
 {
-	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
-	
-	glColor3fv(PALE_GREEN); //pale green -- better to have a const
-	glBegin(GL_QUADS);
+	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	for (int y = 0; y < 1; y++)
+	glColor3fv(PALE_GREEN); //pale green -- better to have a const
+
+
+	float origin = -GRID_SIZE / 4;
+
+	for (int y = 0; y < 10; y++)
 	{
-		for (int x = 0; x < 1; x++)
+		for (int x = 0; x < 10; x++)
 		{
+			// chagne the 'origin' in vertexes to be based on x & y
+			glBegin(GL_QUADS);
+			origin = -GRID_SIZE / 4 + x;
+			printf("%f", origin);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(-(GRID_SQUARE_SIZE / 2), -(GRID_SQUARE_SIZE / 2));
+			glVertex3f(origin, 0.0f, origin);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(-(GRID_SQUARE_SIZE / 2), 0.0f, GRID_SQUARE_SIZE / 2);
+			glVertex3f(origin, 0.0f, origin + 1.0f);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(GRID_SQUARE_SIZE / 2, 0.0f, GRID_SQUARE_SIZE / 2);
+			glVertex3f(origin + 1.0f, 0.0f, origin + 1.0f);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(GRID_SQUARE_SIZE / 2, 0.0f, -(GRID_SQUARE_SIZE / 2));
+			glVertex3f(origin + 1.0f, 0.0f, origin);
+			glEnd();
 		}
 	}
 	
 
-	glEnd();
 }
 
 
