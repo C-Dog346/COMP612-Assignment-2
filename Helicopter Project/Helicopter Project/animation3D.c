@@ -107,6 +107,7 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 #define KEY_MOVE_RIGHT					'd'
 #define KEY_RENDER_FILL					'l'
 #define KEY_EXIT						27 // Escape key.
+#define DEBUG_CAMERA					'`'
 #define DEBUG_CAMERA_DEFAULT			'1'
 #define DEBUG_CAMERA_FRONT				'2'
 #define DEBUG_CAMERA_TOP				'3'
@@ -182,7 +183,9 @@ GLint windowHeight = 600;
 
 // current camera position
 GLfloat cameraPosition[] = { 0.0f, 5.0f, 12.0f };
-float cameraOffset[] = { 0.0f, 5.0f, 0.0f };
+float cameraOffset[] = { 0.0f, 7.5f, 0.0f };
+// camera debug
+int debug = 0;
 
 // pointer to quadric objects
 GLUquadricObj* sphereQuadric;
@@ -223,6 +226,9 @@ GLUquadricObj* cylinderQuadric;
 
 #define PI 3.1415
 
+// camera distance
+#define CAMERA_DISTANCE 15.0
+
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
@@ -237,7 +243,7 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 10.0f;
-float rotorSpin = 0;
+float rotorSpin = 1;
 
 
 //heading 0 is facing forwards looking at you!
@@ -304,10 +310,6 @@ void display(void)
 
 	// load the identity matrix into the model view matrix
 	glLoadIdentity();
-
-	cameraPosition[0] = 0.0f + cameraOffset[0];
-	cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
-	cameraPosition[2] = 12.0f + cameraOffset[2];
 
 	//set up our camera - slightly up in the y so we can see the ground plane
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],
@@ -387,7 +389,7 @@ void keyPressed(unsigned char key, int x, int y)
 		motionKeyStates.MoveRight = KEYSTATE_DOWN;
 		keyboardMotion.Sway = MOTION_RIGHT;
 		break;
-
+	
 		/*
 			Other Keyboard Functions (add any new character key controls here)
 
@@ -403,6 +405,18 @@ void keyPressed(unsigned char key, int x, int y)
 		gluDeleteQuadric(sphereQuadric);
 		gluDeleteQuadric(cylinderQuadric);
 		exit(0);
+		break;
+	case DEBUG_CAMERA:
+		debug = debug ? 0 : 1;
+		if (debug)
+		{
+			cameraOffset[0] = 0.0f;
+			cameraOffset[1] = 5.0f;
+			cameraOffset[2] = 0.0f;
+			cameraPosition[0] = 0.0f + cameraOffset[0];
+			cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+			cameraPosition[2] = 12.0f + cameraOffset[2];
+		}
 		break;
 	case DEBUG_CAMERA_DEFAULT:
 		cameraOffset[1] = 5.0f; 
@@ -681,8 +695,8 @@ void think(void)
 		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
 		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
 
-		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
-		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+		helicopterLocation[0] -= xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+		helicopterLocation[2] -= zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
@@ -732,6 +746,22 @@ void initLights(void)
 
 	// Enable use of simple GL colours as materials.
 	glEnable(GL_COLOR_MATERIAL);
+}
+
+void updateCameraPos(void)
+{
+	if (debug) {
+		cameraPosition[0] = 0.0f + cameraOffset[0];
+		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+		cameraPosition[2] = 12.0f + cameraOffset[2];
+	}
+	else
+	{
+		cameraPosition[0] = helicopterLocation[0] - sinf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
+		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+		cameraPosition[2] = helicopterLocation[2] - cosf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
+	}
+
 }
 
 void drawOrigin(void)
@@ -963,9 +993,6 @@ void drawTailFin(void)
 
 }
 
-void updateCameraPos(void)
-{
 
-}
 
 /******************************************************************************/
