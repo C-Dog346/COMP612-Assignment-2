@@ -825,7 +825,7 @@ void drawGround(void)
 		for (int x = 0; x < 1; x++)
 		{
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(-(GRID_SQUARE_SIZE / 2), -(GRID_SQUARE_SIZE / 2));
+			glVertex3f(-(GRID_SQUARE_SIZE / 2), 0.0f, -(GRID_SQUARE_SIZE / 2));
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
 			glVertex3f(-(GRID_SQUARE_SIZE / 2), 0.0f, GRID_SQUARE_SIZE / 2);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
