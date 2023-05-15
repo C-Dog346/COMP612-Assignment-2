@@ -812,9 +812,40 @@ void basicGround(void)
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
 	glVertex3f(corner, 0.0f, corner);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(corner, 0.0f, -corner);
+
+	glVertex3f(5.0f, 0.0f, -5.0f);
 	glEnd();
 }
+
+void drawGround(void)
+{
+	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glColor3fv(PALE_GREEN); //pale green -- better to have a const
+
+
+	float origin = -GRID_SIZE / 2;
+
+	for (int z = origin; z < GRID_SIZE / 2; z++)
+	{
+		for (int x = origin; x < GRID_SIZE / 2; x++)
+		{
+			// chagne the 'origin' in vertexes to be based on x & y
+			glBegin(GL_QUADS);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x, 0.0f, z);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x, 0.0f, z + 1.0f);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x + 1.0f, 0.0f, z + 1.0f);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x + 1.0f, 0.0f, z);
+			glEnd();
+		}
+	}
+	
+
+
 
 
 
