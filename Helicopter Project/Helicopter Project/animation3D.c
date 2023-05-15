@@ -144,6 +144,7 @@ void initLights(void);
 
 void drawOrigin(void);
 void basicGround(void);
+void drawGround(void);
 
 
 // hierarchical model functions to position and scale parts
@@ -323,8 +324,8 @@ void display(void)
 	drawOrigin();
 
 	//draw the ground
-	basicGround();
-	//drawGround();
+	//basicGround();
+	drawGround();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -843,14 +844,7 @@ void drawGround(void)
 			glEnd();
 		}
 	}
-<<<<<<< HEAD
 }
-=======
-	
-
-
->>>>>>> f4efd48c09d367e8c7db228b58c1a4140e119b3e
-
 
 
 void drawHelicopter()
