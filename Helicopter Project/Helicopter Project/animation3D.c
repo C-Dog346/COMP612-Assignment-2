@@ -820,24 +820,22 @@ void drawGround(void)
 	glColor3fv(PALE_GREEN); //pale green -- better to have a const
 
 
-	float origin = -GRID_SIZE / 4;
+	float origin = -GRID_SIZE / 2;
 
-	for (int y = 0; y < 10; y++)
+	for (int z = origin; z < GRID_SIZE / 2; z++)
 	{
-		for (int x = 0; x < 10; x++)
+		for (int x = origin; x < GRID_SIZE / 2; x++)
 		{
 			// chagne the 'origin' in vertexes to be based on x & y
 			glBegin(GL_QUADS);
-			origin = -GRID_SIZE / 4 + x;
-			printf("%f", origin);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(origin, 0.0f, origin);
+			glVertex3f(x, 0.0f, z);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(origin, 0.0f, origin + 1.0f);
+			glVertex3f(x, 0.0f, z + 1.0f);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(origin + 1.0f, 0.0f, origin + 1.0f);
+			glVertex3f(x + 1.0f, 0.0f, z + 1.0f);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(origin + 1.0f, 0.0f, origin);
+			glVertex3f(x + 1.0f, 0.0f, z);
 			glEnd();
 		}
 	}
