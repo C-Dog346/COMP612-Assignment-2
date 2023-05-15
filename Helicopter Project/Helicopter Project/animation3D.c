@@ -826,26 +826,30 @@ void drawGround(void)
 
 	float origin = -GRID_SIZE / 2;
 
-	for (int z = origin; z < GRID_SIZE / 2; z++)
+	for (int z = origin; z < GRID_SIZE / 2; z += GRID_SQUARE_SIZE)
 	{
-		for (int x = origin; x < GRID_SIZE / 2; x++)
+		for (int x = origin; x < GRID_SIZE / 2; x += GRID_SQUARE_SIZE)
 		{
 			// chagne the 'origin' in vertexes to be based on x & y
 			glBegin(GL_QUADS);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
 			glVertex3f(x, 0.0f, z);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(x, 0.0f, z + 1.0f);
+			glVertex3f(x, 0.0f, z + GRID_SQUARE_SIZE);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(x + 1.0f, 0.0f, z + 1.0f);
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z + GRID_SQUARE_SIZE);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-			glVertex3f(x + 1.0f, 0.0f, z);
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z);
 			glEnd();
 		}
 	}
+<<<<<<< HEAD
+}
+=======
 	
 
 
+>>>>>>> f4efd48c09d367e8c7db228b58c1a4140e119b3e
 
 
 
