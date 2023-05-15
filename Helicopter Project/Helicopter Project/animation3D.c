@@ -247,6 +247,7 @@ float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 10.0f;
 float rotorSpin = 1;
+float corner = GRID_SIZE / 2;
 
 
 //heading 0 is facing forwards looking at you!
@@ -799,16 +800,19 @@ void drawOrigin(void)
 */
 void basicGround(void)
 {
+	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	glColor3fv(PALE_GREEN); //pale green -- better to have a const
 	glBegin(GL_QUADS);
+
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(-5.0f, 0.0f, -5.0f);
+	glVertex3f(-corner, 0.0f, -corner);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(-5.0f, 0.0f, 5.0f);
+	glVertex3f(-corner, 0.0f, corner);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(5.0f, 0.0f, 5.0f);
+	glVertex3f(corner, 0.0f, corner);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(5.0f, 0.0f, -5.0f);
+	glVertex3f(corner, 0.0f, -corner);
 	glEnd();
 }
 
