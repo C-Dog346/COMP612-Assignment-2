@@ -201,7 +201,7 @@ GLUquadricObj* cylinderQuadric;
 
 // skid connectors
 #define SKID_CONNECTOR_RADIUS BODY_RADIUS / 10.0
-#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 1.5
+#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 0.8
 
 // skids
 #define SKID_RADIUS BODY_RADIUS / 10.0
@@ -215,15 +215,15 @@ GLUquadricObj* cylinderQuadric;
 
 // top rotors
 #define ROTOR_CUBE_SIZE 0.8
-#define ROTOR_BLADE_SIZE 4.0
+#define ROTOR_BLADE_SIZE 10.0
 #define NUMBER_OF_BLADES 4
 #define ROTOR_SPEED 750.0
 
 // tail
 #define TAIL_BASE 1.0
 #define TAIL_LENGTH 6.5
-#define TAIL_TIP 0.25
-#define TAIL_ROTORS_SCALE_FACTOR 0.45
+#define TAIL_TIP_RADIUS 0.25
+#define TAIL_ROTORS_SCALE_FACTOR 0.25
 
 #define GRID_SQUARE_SIZE 1.0f
 #define GRID_SIZE 100.0f
@@ -437,10 +437,11 @@ void keyPressed(unsigned char key, int x, int y)
 		cameraOffset[2] = -11.99f;
 		break;
 	case DEBUG_CAMERA_LOW:
-		cameraOffset[1] = -2.0f;
+		cameraOffset[1] = -4.0f;
 		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_DEFAULT_ZOOM_OUT:
+		printf("YO");
 		cameraOffset[1] = 5.0f;
 		cameraOffset[2] = 5.0f;
 		break;
@@ -706,7 +707,10 @@ void think(void)
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
-		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+		if (helicopterLocation[1] > BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS)
+			helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+		else if (keyboardMotion.Heave > 0)
+			helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
 	}
 
 	// rotor spin
@@ -903,7 +907,7 @@ void drawSkidConnector(enum Side side)
 	glTranslated(-BODY_RADIUS / 2 * side, 0, 0);
 
 	// connector poles
-	glTranslated(2.0 * side, 0.0, 0.0);
+	glTranslated(2.0 * side, -BODY_RADIUS * 0.75, 0.0);
 	glRotated(90, 1.0, 0.0, 0.0);
 	gluCylinder(cylinderQuadric, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_LENGTH, 50, 50);
 
@@ -981,7 +985,7 @@ void drawBlade(int num)
 	// rotate based on which blade
 	glRotated(360 / NUMBER_OF_BLADES * num + rotorSpin, 0.0, 1.0, 0.0);
 	// flatten cube to make it look like a blade
-	glScaled(1.0, 0.02, 0.1);
+	glScaled(1.0, 0.02, 0.05);
 	// blade
 	glutSolidCube(ROTOR_BLADE_SIZE);
 
@@ -997,9 +1001,9 @@ void drawTail(void)
 	glColor3fv(POLICE_BLUE);
 
 	glRotated(180, 1.0, 0.0, 0.0);
-	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP, TAIL_LENGTH, 20, 20);
+	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP_RADIUS, TAIL_LENGTH, 20, 20);
 	glTranslated(0.0, 0.0, TAIL_LENGTH);
-	gluSphere(sphereQuadric, TAIL_TIP, 50, 50);
+	gluSphere(sphereQuadric, TAIL_TIP_RADIUS, 50, 50);
 
 	glPopMatrix();
 }
@@ -1011,7 +1015,7 @@ void drawTailRotors(void)
 	glPushMatrix();
 
 	glRotated(180, 1.0, 1.0, 0.0);
-	glTranslated(0.0, TAIL_TIP * 1.25, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
+	glTranslated(0.0, TAIL_TIP_RADIUS * 1.25, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
 
 	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
 	// blades
