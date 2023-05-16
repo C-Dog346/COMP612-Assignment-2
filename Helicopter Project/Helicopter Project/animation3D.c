@@ -211,7 +211,8 @@ GLUquadricObj* cylinderQuadric;
 #define SKID_ENDING_RADIUS SKID_RADIUS
 
 // wind shield
-#define WINDSHIELD_SIZE 2.0
+#define WINDSHIELD_RADIUS 0.75
+#define WINDSHIELD_LENGTH 1.5
 
 // top rotors
 #define ROTOR_CUBE_SIZE 0.8
@@ -233,6 +234,8 @@ GLUquadricObj* cylinderQuadric;
 // camera distance
 #define CAMERA_DISTANCE 15.0
 
+#define START_HEIGHT BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
+
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
@@ -244,7 +247,7 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 
 
 //model animation variables (position, heading, speed (metres per second))
-float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
+float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 10.0f;
 float rotorSpin = 1;
@@ -441,7 +444,6 @@ void keyPressed(unsigned char key, int x, int y)
 		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_DEFAULT_ZOOM_OUT:
-		printf("YO");
 		cameraOffset[1] = 5.0f;
 		cameraOffset[2] = 5.0f;
 		break;
@@ -707,7 +709,7 @@ void think(void)
 	}
 	if (keyboardMotion.Heave != MOTION_NONE) {
 		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
-		if (helicopterLocation[1] > BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS)
+		if (helicopterLocation[1] > START_HEIGHT)
 			helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
 		else if (keyboardMotion.Heave > 0)
 			helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
@@ -761,7 +763,6 @@ void initLights(void)
 void updateCameraPos(void)
 {
 	if (debug) {
-		printf("here");
 		cameraPosition[0] = 0.0f + cameraOffset[0];
 		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
 		cameraPosition[2] = 12.0f + cameraOffset[2];
@@ -882,16 +883,24 @@ void drawHelicopter()
 
 void drawWindshield(void)
 {
+	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
+
 	glColor3fv(LIGHT_CYAN);
 
 	glPushMatrix();
 
 	// move forwards and up
-	glTranslated(0.0, 0.4, 1.02);
-	// aim to make the windshield look slightly longer than wide
-	glScaled(0.9, 1.0, 1.0);
-	// cube acting as windshield
-	glutSolidCube(WINDSHIELD_SIZE);
+	glTranslated(-WINDSHIELD_LENGTH / 2, 0.4, 1.5);
+	// rotate
+	glRotated(90, 0.0, 1.0, 0.0);
+	// cylinder acting as windshield
+	gluCylinder(cylinderQuadric, WINDSHIELD_RADIUS, WINDSHIELD_RADIUS, WINDSHIELD_LENGTH, 50, 50);
+
+	gluSphere(sphereQuadric, WINDSHIELD_RADIUS, 50, 50);
+
+	glTranslated(0.0, 0.0, WINDSHIELD_LENGTH);
+
+	gluSphere(sphereQuadric, WINDSHIELD_RADIUS, 50, 50);
 
 	glPopMatrix();
 }
