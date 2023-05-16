@@ -107,7 +107,7 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 #define KEY_MOVE_RIGHT					'd'
 #define KEY_RENDER_FILL					'l'
 #define KEY_EXIT						27 // Escape key.
-#define DEBUG_CAMERA					'`'
+#define DEBUG_CAMERA					'='
 #define DEBUG_CAMERA_DEFAULT			'1'
 #define DEBUG_CAMERA_FRONT				'2'
 #define DEBUG_CAMERA_TOP				'3'
@@ -761,6 +761,7 @@ void initLights(void)
 void updateCameraPos(void)
 {
 	if (debug) {
+		printf("here");
 		cameraPosition[0] = 0.0f + cameraOffset[0];
 		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
 		cameraPosition[2] = 12.0f + cameraOffset[2];
