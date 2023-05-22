@@ -107,6 +107,7 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 #define KEY_MOVE_RIGHT					'd'
 #define KEY_RENDER_FILL					'l'
 #define KEY_EXIT						27 // Escape key.
+#define DEBUG_CAMERA					'='
 #define DEBUG_CAMERA_DEFAULT			'1'
 #define DEBUG_CAMERA_FRONT				'2'
 #define DEBUG_CAMERA_TOP				'3'
@@ -143,6 +144,7 @@ void initLights(void);
 
 void drawOrigin(void);
 void basicGround(void);
+void drawGround(void);
 
 
 // hierarchical model functions to position and scale parts
@@ -182,12 +184,16 @@ GLint windowHeight = 600;
 
 // current camera position
 GLfloat cameraPosition[] = { 0.0f, 5.0f, 12.0f };
-float cameraOffset[] = { 0.0f, 5.0f, 0.0f };
+float cameraOffset[] = { 0.0f, 7.5f, 0.0f };
+// camera debug
+int debug = 0;
 
 // pointer to quadric objects
 GLUquadricObj* sphereQuadric;
 GLUquadricObj* cylinderQuadric;
 
+float rotorSpeed = 0.0f;
+float rotorAngle = 1.0f;
 
 // hierachical model setup values
 
@@ -197,7 +203,7 @@ GLUquadricObj* cylinderQuadric;
 
 // skid connectors
 #define SKID_CONNECTOR_RADIUS BODY_RADIUS / 10.0
-#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 1.5
+#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 0.8
 
 // skids
 #define SKID_RADIUS BODY_RADIUS / 10.0
@@ -207,21 +213,33 @@ GLUquadricObj* cylinderQuadric;
 #define SKID_ENDING_RADIUS SKID_RADIUS
 
 // wind shield
-#define WINDSHIELD_SIZE 2.0
+#define WINDSHIELD_RADIUS 0.75
+#define WINDSHIELD_LENGTH 1.5
+
+// rotor speed variables
+#define ROTOR_MAX_SPEED 750.0
+#define ROTOR_ACCELRATION 100.0
 
 // top rotors
 #define ROTOR_CUBE_SIZE 0.8
-#define ROTOR_BLADE_SIZE 4.0
+#define ROTOR_BLADE_SIZE 10.0
 #define NUMBER_OF_BLADES 4
-#define ROTOR_SPEED 750.0
 
 // tail
 #define TAIL_BASE 1.0
 #define TAIL_LENGTH 6.5
-#define TAIL_TIP 0.25
-#define TAIL_ROTORS_SCALE_FACTOR 0.45
+#define TAIL_TIP_RADIUS 0.25
+#define TAIL_ROTORS_SCALE_FACTOR 0.25
+
+#define GRID_SQUARE_SIZE 1.0f
+#define GRID_SIZE 100.0f
 
 #define PI 3.1415
+
+// camera distance
+#define CAMERA_DISTANCE 15.0
+
+#define START_HEIGHT BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
 
 const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
@@ -234,10 +252,10 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 
 
 //model animation variables (position, heading, speed (metres per second))
-float helicopterLocation[] = { 0.0f, 5.0f, 0.0f }; // X, Y, Z
+float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 10.0f;
-float rotorSpin = 0;
+float corner = GRID_SIZE / 2;
 
 
 //heading 0 is facing forwards looking at you!
@@ -305,10 +323,6 @@ void display(void)
 	// load the identity matrix into the model view matrix
 	glLoadIdentity();
 
-	cameraPosition[0] = 0.0f + cameraOffset[0];
-	cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
-	cameraPosition[2] = 12.0f + cameraOffset[2];
-
 	//set up our camera - slightly up in the y so we can see the ground plane
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],
 		helicopterLocation[0], helicopterLocation[1], helicopterLocation[2],
@@ -317,7 +331,8 @@ void display(void)
 	drawOrigin();
 
 	//draw the ground
-	basicGround();
+	//basicGround();
+	drawGround();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -387,7 +402,7 @@ void keyPressed(unsigned char key, int x, int y)
 		motionKeyStates.MoveRight = KEYSTATE_DOWN;
 		keyboardMotion.Sway = MOTION_RIGHT;
 		break;
-
+	
 		/*
 			Other Keyboard Functions (add any new character key controls here)
 
@@ -404,6 +419,18 @@ void keyPressed(unsigned char key, int x, int y)
 		gluDeleteQuadric(cylinderQuadric);
 		exit(0);
 		break;
+	case DEBUG_CAMERA:
+		debug = debug ? 0 : 1;
+		if (debug)
+		{
+			cameraOffset[0] = 0.0f;
+			cameraOffset[1] = 5.0f;
+			cameraOffset[2] = 0.0f;
+			cameraPosition[0] = 0.0f + cameraOffset[0];
+			cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+			cameraPosition[2] = 12.0f + cameraOffset[2];
+		}
+		break;
 	case DEBUG_CAMERA_DEFAULT:
 		cameraOffset[1] = 5.0f; 
 		cameraOffset[2] = 0.0f;
@@ -417,7 +444,7 @@ void keyPressed(unsigned char key, int x, int y)
 		cameraOffset[2] = -11.99f;
 		break;
 	case DEBUG_CAMERA_LOW:
-		cameraOffset[1] = -2.0f;
+		cameraOffset[1] = -4.0f;
 		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_DEFAULT_ZOOM_OUT:
@@ -664,36 +691,45 @@ void think(void)
 		Keyboard motion handler: complete this section to make your "player-controlled"
 		object respond to keyboard input.
 	*/
-	if (keyboardMotion.Yaw != MOTION_NONE) {
-		/* TEMPLATE: Turn your object right (clockwise) if .Yaw < 0, or left (anticlockwise) if .Yaw > 0 */
-		helicopterFacing += 90.0f * FRAME_TIME_SEC * keyboardMotion.Yaw; //90 RPM
-	}
-	if (keyboardMotion.Surge != MOTION_NONE) {
-		/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
-		float xMove = sinf(helicopterFacing * (PI / 180)) * moveSpeed;
-		float zMove = cosf(helicopterFacing * (PI / 180)) * moveSpeed;
+	if (rotorSpeed >= ROTOR_MAX_SPEED) {
+		if (keyboardMotion.Yaw != MOTION_NONE) {
+			/* TEMPLATE: Turn your object right (clockwise) if .Yaw < 0, or left (anticlockwise) if .Yaw > 0 */
+			helicopterFacing += 90.0f * FRAME_TIME_SEC * keyboardMotion.Yaw; //90 RPM
+		}
+		if (keyboardMotion.Surge != MOTION_NONE) {
+			/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
+			float xMove = sinf(helicopterFacing * (PI / 180)) * moveSpeed;
+			float zMove = cosf(helicopterFacing * (PI / 180)) * moveSpeed;
 
-		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
-		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
-	}
-	if (keyboardMotion.Sway != MOTION_NONE) {
-		/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
-		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
-		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
+			helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
+			helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
+		}
+		if (keyboardMotion.Sway != MOTION_NONE) {
+			/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
+			float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
+			float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
 
-		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
-		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+			helicopterLocation[0] -= xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+			helicopterLocation[2] -= zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+		}
+		if (keyboardMotion.Heave != MOTION_NONE) {
+			/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
+			if (helicopterLocation[1] > START_HEIGHT)
+				helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+			else if (keyboardMotion.Heave > 0)
+				helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+		}
 	}
-	if (keyboardMotion.Heave != MOTION_NONE) {
-		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
-		helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+	else {
+		rotorSpeed += ROTOR_ACCELRATION * FRAME_TIME_SEC;
 	}
 
 	// rotor spin
-	if (rotorSpin > 90)
-		rotorSpin = 0;
+	if (rotorAngle > 90)
+		rotorAngle = 0;
 
-	rotorSpin += ROTOR_SPEED * FRAME_TIME_SEC;
+
+	rotorAngle += rotorSpeed * FRAME_TIME_SEC;
 
 	updateCameraPos();
 }
@@ -734,6 +770,22 @@ void initLights(void)
 	glEnable(GL_COLOR_MATERIAL);
 }
 
+void updateCameraPos(void)
+{
+	if (debug) {
+		cameraPosition[0] = 0.0f + cameraOffset[0];
+		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+		cameraPosition[2] = 12.0f + cameraOffset[2];
+	}
+	else
+	{
+		cameraPosition[0] = helicopterLocation[0] - sinf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
+		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
+		cameraPosition[2] = helicopterLocation[2] - cosf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
+	}
+
+}
+
 void drawOrigin(void)
 {
 	glColor3f(0.0f, 1.0f, 1.0f);
@@ -765,19 +817,50 @@ void drawOrigin(void)
 */
 void basicGround(void)
 {
+	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	glColor3fv(PALE_GREEN); //pale green -- better to have a const
 	glBegin(GL_QUADS);
+
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(-5.0f, 0.0f, -5.0f);
+	glVertex3f(-corner, 0.0f, -corner);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(-5.0f, 0.0f, 5.0f);
+	glVertex3f(-corner, 0.0f, corner);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(5.0f, 0.0f, 5.0f);
+	glVertex3f(corner, 0.0f, corner);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+
 	glVertex3f(5.0f, 0.0f, -5.0f);
 	glEnd();
 }
 
+void drawGround(void)
+{
+	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glColor3fv(PALE_GREEN); //pale green -- better to have a const
+
+
+	float origin = -GRID_SIZE / 2;
+
+	for (int z = origin; z < GRID_SIZE / 2; z += GRID_SQUARE_SIZE)
+	{
+		for (int x = origin; x < GRID_SIZE / 2; x += GRID_SQUARE_SIZE)
+		{
+			// chagne the 'origin' in vertexes to be based on x & y
+			glBegin(GL_QUADS);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x, 0.0f, z);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x, 0.0f, z + GRID_SQUARE_SIZE);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z + GRID_SQUARE_SIZE);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z);
+			glEnd();
+		}
+	}
+}
 
 
 void drawHelicopter()
@@ -810,16 +893,24 @@ void drawHelicopter()
 
 void drawWindshield(void)
 {
+	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
+
 	glColor3fv(LIGHT_CYAN);
 
 	glPushMatrix();
 
 	// move forwards and up
-	glTranslated(0.0, 0.4, 1.02);
-	// aim to make the windshield look slightly longer than wide
-	glScaled(0.9, 1.0, 1.0);
-	// cube acting as windshield
-	glutSolidCube(WINDSHIELD_SIZE);
+	glTranslated(-WINDSHIELD_LENGTH / 2, 0.4, 1.5);
+	// rotate
+	glRotated(90, 0.0, 1.0, 0.0);
+	// cylinder acting as windshield
+	gluCylinder(cylinderQuadric, WINDSHIELD_RADIUS, WINDSHIELD_RADIUS, WINDSHIELD_LENGTH, 50, 50);
+
+	gluSphere(sphereQuadric, WINDSHIELD_RADIUS, 50, 50);
+
+	glTranslated(0.0, 0.0, WINDSHIELD_LENGTH);
+
+	gluSphere(sphereQuadric, WINDSHIELD_RADIUS, 50, 50);
 
 	glPopMatrix();
 }
@@ -836,7 +927,7 @@ void drawSkidConnector(enum Side side)
 	glTranslated(-BODY_RADIUS / 2 * side, 0, 0);
 
 	// connector poles
-	glTranslated(2.0 * side, 0.0, 0.0);
+	glTranslated(2.0 * side, -BODY_RADIUS * 0.75, 0.0);
 	glRotated(90, 1.0, 0.0, 0.0);
 	gluCylinder(cylinderQuadric, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_LENGTH, 50, 50);
 
@@ -912,9 +1003,9 @@ void drawBlade(int num)
 	// stay or move to the front
 	glTranslated(0.0, ROTOR_CUBE_SIZE/2 - 0.2, 0.0);
 	// rotate based on which blade
-	glRotated(360 / NUMBER_OF_BLADES * num + rotorSpin, 0.0, 1.0, 0.0);
+	glRotated(360 / NUMBER_OF_BLADES * num + rotorAngle, 0.0, 1.0, 0.0);
 	// flatten cube to make it look like a blade
-	glScaled(1.0, 0.02, 0.1);
+	glScaled(1.0, 0.02, 0.05);
 	// blade
 	glutSolidCube(ROTOR_BLADE_SIZE);
 
@@ -930,9 +1021,9 @@ void drawTail(void)
 	glColor3fv(POLICE_BLUE);
 
 	glRotated(180, 1.0, 0.0, 0.0);
-	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP, TAIL_LENGTH, 20, 20);
+	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP_RADIUS, TAIL_LENGTH, 20, 20);
 	glTranslated(0.0, 0.0, TAIL_LENGTH);
-	gluSphere(sphereQuadric, TAIL_TIP, 50, 50);
+	gluSphere(sphereQuadric, TAIL_TIP_RADIUS, 50, 50);
 
 	glPopMatrix();
 }
@@ -944,7 +1035,7 @@ void drawTailRotors(void)
 	glPushMatrix();
 
 	glRotated(180, 1.0, 1.0, 0.0);
-	glTranslated(0.0, TAIL_TIP * 1.25, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
+	glTranslated(0.0, TAIL_TIP_RADIUS * 1.25, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
 
 	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
 	// blades
@@ -962,10 +1053,4 @@ void drawTailFin(void)
 {
 
 }
-
-void updateCameraPos(void)
-{
-
-}
-
 /******************************************************************************/
