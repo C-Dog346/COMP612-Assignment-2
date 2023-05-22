@@ -192,6 +192,8 @@ int debug = 0;
 GLUquadricObj* sphereQuadric;
 GLUquadricObj* cylinderQuadric;
 
+float rotorSpeed = 0.0f;
+float rotorAngle = 1.0f;
 
 // hierachical model setup values
 
@@ -215,8 +217,8 @@ GLUquadricObj* cylinderQuadric;
 #define WINDSHIELD_LENGTH 1.5
 
 // rotor speed variables
-#define ROTOR_MAX_SPEED
-#define ROTOR_ACCELRATION 500.0
+#define ROTOR_MAX_SPEED 750.0
+#define ROTOR_ACCELRATION 100.0
 
 // top rotors
 #define ROTOR_CUBE_SIZE 0.8
@@ -253,7 +255,6 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 10.0f;
-float rotorSpin = 1;
 float corner = GRID_SIZE / 2;
 
 
@@ -690,41 +691,45 @@ void think(void)
 		Keyboard motion handler: complete this section to make your "player-controlled"
 		object respond to keyboard input.
 	*/
-	if ()
-	if (keyboardMotion.Yaw != MOTION_NONE) {
-		/* TEMPLATE: Turn your object right (clockwise) if .Yaw < 0, or left (anticlockwise) if .Yaw > 0 */
-		helicopterFacing += 90.0f * FRAME_TIME_SEC * keyboardMotion.Yaw; //90 RPM
-	}
-	if (keyboardMotion.Surge != MOTION_NONE) {
-		/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
-		float xMove = sinf(helicopterFacing * (PI / 180)) * moveSpeed;
-		float zMove = cosf(helicopterFacing * (PI / 180)) * moveSpeed;
+	if (rotorSpeed >= ROTOR_MAX_SPEED) {
+		if (keyboardMotion.Yaw != MOTION_NONE) {
+			/* TEMPLATE: Turn your object right (clockwise) if .Yaw < 0, or left (anticlockwise) if .Yaw > 0 */
+			helicopterFacing += 90.0f * FRAME_TIME_SEC * keyboardMotion.Yaw; //90 RPM
+		}
+		if (keyboardMotion.Surge != MOTION_NONE) {
+			/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
+			float xMove = sinf(helicopterFacing * (PI / 180)) * moveSpeed;
+			float zMove = cosf(helicopterFacing * (PI / 180)) * moveSpeed;
 
-		helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
-		helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
-	}
-	if (keyboardMotion.Sway != MOTION_NONE) {
-		/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
-		float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
-		float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
+			helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
+			helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
+		}
+		if (keyboardMotion.Sway != MOTION_NONE) {
+			/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
+			float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
+			float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
 
-		helicopterLocation[0] -= xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
-		helicopterLocation[2] -= zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+			helicopterLocation[0] -= xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+			helicopterLocation[2] -= zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
+		}
+		if (keyboardMotion.Heave != MOTION_NONE) {
+			/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
+			if (helicopterLocation[1] > START_HEIGHT)
+				helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+			else if (keyboardMotion.Heave > 0)
+				helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+		}
 	}
-	if (keyboardMotion.Heave != MOTION_NONE) {
-		/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
-		if (helicopterLocation[1] > START_HEIGHT)
-			helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
-		else if (keyboardMotion.Heave > 0)
-			helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+	else {
+		rotorSpeed += ROTOR_ACCELRATION * FRAME_TIME_SEC;
 	}
 
 	// rotor spin
-	if (rotorSpin > 90)
-		rotorSpin = 0;
+	if (rotorAngle > 90)
+		rotorAngle = 0;
 
 
-	rotorSpin += ROTOR_ACCELRATION * FRAME_TIME_SEC;
+	rotorAngle += rotorSpeed * FRAME_TIME_SEC;
 
 	updateCameraPos();
 }
@@ -998,7 +1003,7 @@ void drawBlade(int num)
 	// stay or move to the front
 	glTranslated(0.0, ROTOR_CUBE_SIZE/2 - 0.2, 0.0);
 	// rotate based on which blade
-	glRotated(360 / NUMBER_OF_BLADES * num + rotorSpin, 0.0, 1.0, 0.0);
+	glRotated(360 / NUMBER_OF_BLADES * num + rotorAngle, 0.0, 1.0, 0.0);
 	// flatten cube to make it look like a blade
 	glScaled(1.0, 0.02, 0.05);
 	// blade
