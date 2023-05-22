@@ -214,11 +214,14 @@ GLUquadricObj* cylinderQuadric;
 #define WINDSHIELD_RADIUS 0.75
 #define WINDSHIELD_LENGTH 1.5
 
+// rotor speed variables
+#define ROTOR_MAX_SPEED
+#define ROTOR_ACCELRATION 500.0
+
 // top rotors
 #define ROTOR_CUBE_SIZE 0.8
 #define ROTOR_BLADE_SIZE 10.0
 #define NUMBER_OF_BLADES 4
-#define ROTOR_SPEED 750.0
 
 // tail
 #define TAIL_BASE 1.0
@@ -687,6 +690,7 @@ void think(void)
 		Keyboard motion handler: complete this section to make your "player-controlled"
 		object respond to keyboard input.
 	*/
+	if ()
 	if (keyboardMotion.Yaw != MOTION_NONE) {
 		/* TEMPLATE: Turn your object right (clockwise) if .Yaw < 0, or left (anticlockwise) if .Yaw > 0 */
 		helicopterFacing += 90.0f * FRAME_TIME_SEC * keyboardMotion.Yaw; //90 RPM
@@ -719,7 +723,8 @@ void think(void)
 	if (rotorSpin > 90)
 		rotorSpin = 0;
 
-	rotorSpin += ROTOR_SPEED * FRAME_TIME_SEC;
+
+	rotorSpin += ROTOR_ACCELRATION * FRAME_TIME_SEC;
 
 	updateCameraPos();
 }
