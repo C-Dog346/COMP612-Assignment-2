@@ -143,7 +143,6 @@ void think(void);
 void initLights(void);
 
 void drawOrigin(void);
-void basicGround(void);
 void drawGround(void);
 
 
@@ -192,6 +191,8 @@ int debug = 0;
 GLUquadricObj* sphereQuadric;
 GLUquadricObj* cylinderQuadric;
 
+
+// rotor blade speed management
 float rotorSpeed = 0.0f;
 float rotorAngle = 1.0f;
 
@@ -231,34 +232,29 @@ float rotorAngle = 1.0f;
 #define TAIL_TIP_RADIUS 0.25
 #define TAIL_ROTORS_SCALE_FACTOR 0.25
 
+// grid
 #define GRID_SQUARE_SIZE 1.0f
 #define GRID_SIZE 100.0f
+
 
 #define PI 3.1415
 
 // camera distance
 #define CAMERA_DISTANCE 15.0
 
+// initial y value for the helicopter centre 
 #define START_HEIGHT BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
 
-const GLfloat CREAM[3] = { 1.0f, 0.921f, 0.803f };
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
 const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
 const GLfloat POLICE_BLUE[3] = { 0.0f, 0.0f, 0.40f };
-const GLfloat BLACK[3] = { 0.0f, 0.0f, 0.0f };
 const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
-
-
 
 //model animation variables (position, heading, speed (metres per second))
 float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float moveSpeed = 10.0f;
-float corner = GRID_SIZE / 2;
-
-
-//heading 0 is facing forwards looking at you!
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -331,15 +327,11 @@ void display(void)
 	drawOrigin();
 
 	//draw the ground
-	//basicGround();
 	drawGround();
-
-	glColor3f(1.0f, 1.0f, 1.0f);
 
 	//only apply the transforms inside the push/pop to the scene objects other than origin marker
 
-	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
-	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
+
 
 	drawHelicopter();
 
@@ -815,24 +807,6 @@ void drawOrigin(void)
   A simple ground plane in the XZ plane with vertex normals specified for lighting
   the top face of the ground. The bottom face is not lit.
 */
-void basicGround(void)
-{
-	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	glColor3fv(PALE_GREEN); //pale green -- better to have a const
-	glBegin(GL_QUADS);
-
-	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(-corner, 0.0f, -corner);
-	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(-corner, 0.0f, corner);
-	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(corner, 0.0f, corner);
-	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-
-	glVertex3f(5.0f, 0.0f, -5.0f);
-	glEnd();
-}
 
 void drawGround(void)
 {
