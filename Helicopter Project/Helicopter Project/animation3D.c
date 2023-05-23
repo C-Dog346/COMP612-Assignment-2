@@ -142,8 +142,9 @@ void init(void);
 void think(void);
 void initLights(void);
 
+// origin and grid functions
 void drawOrigin(void);
-void drawGround(void);
+void drawGrid(void);
 
 
 // hierarchical model functions to position and scale parts
@@ -200,47 +201,46 @@ float rotorAngle = 1.0f;
 
 // helicopter
 // body
-#define BODY_RADIUS 2.0
+#define BODY_RADIUS 2.0f
 
 // skid connectors
-#define SKID_CONNECTOR_RADIUS BODY_RADIUS / 10.0
-#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 0.8
+#define SKID_CONNECTOR_RADIUS BODY_RADIUS / 10.0f
+#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 0.8f
 
 // skids
-#define SKID_RADIUS BODY_RADIUS / 10.0
-#define SKID_LENGTH BODY_RADIUS * 3.0
+#define SKID_RADIUS BODY_RADIUS / 10.0f
+#define SKID_LENGTH BODY_RADIUS * 3.0f
 
 // skid endings
 #define SKID_ENDING_RADIUS SKID_RADIUS
 
 // wind shield
-#define WINDSHIELD_RADIUS 0.75
-#define WINDSHIELD_LENGTH 1.5
+#define WINDSHIELD_RADIUS 0.75f
+#define WINDSHIELD_LENGTH 1.5f
 
 // rotor speed variables
-#define ROTOR_MAX_SPEED 750.0
-#define ROTOR_ACCELRATION 100.0
+#define ROTOR_MAX_SPEED 750.0f
+#define ROTOR_ACCELRATION 100.0f
 
 // top rotors
-#define ROTOR_CUBE_SIZE 0.8
-#define ROTOR_BLADE_SIZE 10.0
+#define ROTOR_CUBE_SIZE 0.8f
+#define ROTOR_BLADE_SIZE 10.0f
 #define NUMBER_OF_BLADES 4
 
 // tail
-#define TAIL_BASE 1.0
-#define TAIL_LENGTH 6.5
-#define TAIL_TIP_RADIUS 0.25
-#define TAIL_ROTORS_SCALE_FACTOR 0.25
+#define TAIL_BASE 1.0f
+#define TAIL_LENGTH 6.5f
+#define TAIL_TIP_RADIUS 0.25f
+#define TAIL_ROTORS_SCALE_FACTOR 0.25f
 
 // grid
 #define GRID_SQUARE_SIZE 1.0f
 #define GRID_SIZE 100.0f
 
-
-#define PI 3.1415
+#define PI 3.1415f
 
 // camera distance
-#define CAMERA_DISTANCE 15.0
+#define CAMERA_DISTANCE 15.0f
 
 // initial y value for the helicopter centre 
 #define START_HEIGHT BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
@@ -324,15 +324,13 @@ void display(void)
 		helicopterLocation[0], helicopterLocation[1], helicopterLocation[2],
 		0, 1, 0);
 
+	// origin point
 	drawOrigin();
 
-	//draw the ground
-	drawGround();
+	// draw the ground
+	drawGrid();
 
-	//only apply the transforms inside the push/pop to the scene objects other than origin marker
-
-
-
+	// draw helicopter
 	drawHelicopter();
 
 	// swap the drawing buffers
@@ -411,6 +409,8 @@ void keyPressed(unsigned char key, int x, int y)
 		gluDeleteQuadric(cylinderQuadric);
 		exit(0);
 		break;
+
+	// debug camera options used primarily for inspecting the helicopter from various angles
 	case DEBUG_CAMERA:
 		debug = debug ? 0 : 1;
 		if (debug)
@@ -683,6 +683,7 @@ void think(void)
 		Keyboard motion handler: complete this section to make your "player-controlled"
 		object respond to keyboard input.
 	*/
+	// checks that the rotors are at the appropriate speed
 	if (rotorSpeed >= ROTOR_MAX_SPEED) {
 		if (keyboardMotion.Yaw != MOTION_NONE) {
 			/* TEMPLATE: Turn your object right (clockwise) if .Yaw < 0, or left (anticlockwise) if .Yaw > 0 */
@@ -698,14 +699,15 @@ void think(void)
 		}
 		if (keyboardMotion.Sway != MOTION_NONE) {
 			/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
-			float xMove = sinf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
-			float zMove = cosf((helicopterFacing + 90.0) * (PI / 180)) * moveSpeed;
+			float xMove = sinf((helicopterFacing + 90.0f) * (PI / 180)) * moveSpeed;
+			float zMove = cosf((helicopterFacing + 90.0f) * (PI / 180)) * moveSpeed;
 
 			helicopterLocation[0] -= xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 			helicopterLocation[2] -= zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 		}
 		if (keyboardMotion.Heave != MOTION_NONE) {
 			/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
+			// stops the helicopter from moving below the grid
 			if (helicopterLocation[1] > START_HEIGHT)
 				helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
 			else if (keyboardMotion.Heave > 0)
@@ -716,13 +718,14 @@ void think(void)
 		rotorSpeed += ROTOR_ACCELRATION * FRAME_TIME_SEC;
 	}
 
+	// I didn't like the idea of this number getting stupidly huge so I wanted to reset it to avoid bugs
+	if (rotorAngle > 360.0f)
+		rotorAngle = 0.0f;
+
 	// rotor spin
-	if (rotorAngle > 90)
-		rotorAngle = 0;
-
-
 	rotorAngle += rotorSpeed * FRAME_TIME_SEC;
 
+	// update the camera position to follow the helicopter
 	updateCameraPos();
 }
 
@@ -764,11 +767,13 @@ void initLights(void)
 
 void updateCameraPos(void)
 {
+	// camera position if in debug mode
 	if (debug) {
 		cameraPosition[0] = 0.0f + cameraOffset[0];
 		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
 		cameraPosition[2] = 12.0f + cameraOffset[2];
 	}
+	// normal tracking camera 
 	else
 	{
 		cameraPosition[0] = helicopterLocation[0] - sinf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
@@ -808,18 +813,18 @@ void drawOrigin(void)
   the top face of the ground. The bottom face is not lit.
 */
 
-void drawGround(void)
+void drawGrid(void)
 {
 	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glColor3fv(PALE_GREEN); //pale green -- better to have a const
 
 
-	float origin = -GRID_SIZE / 2;
+	float origin = -GRID_SIZE / 2.0f;
 
-	for (int z = origin; z < GRID_SIZE / 2; z += GRID_SQUARE_SIZE)
+	for (float z = origin; z < GRID_SIZE / 2; z += GRID_SQUARE_SIZE)
 	{
-		for (int x = origin; x < GRID_SIZE / 2; x += GRID_SQUARE_SIZE)
+		for (float x = origin; x < GRID_SIZE / 2; x += GRID_SQUARE_SIZE)
 		{
 			// chagne the 'origin' in vertexes to be based on x & y
 			glBegin(GL_QUADS);
