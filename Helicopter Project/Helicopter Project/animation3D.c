@@ -848,23 +848,33 @@ void drawHelicopter()
 	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
 
 	glPushMatrix();
+
+	// translate helictoper
 	glTranslated(helicopterLocation[0], helicopterLocation[1], helicopterLocation[2]);
+	// rotate helicopter
 	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 
 	glColor3fv(POLICE_BLUE);
 	gluSphere(sphereQuadric, BODY_RADIUS, 50, 50);
 
+	// front windshield
 	drawWindshield();
 
+	// left and right skid connectors
 	drawSkidConnector(leftSide);
 	drawSkidConnector(rightSide);
 
+	// left and right skids
 	drawSkid(rightSide);
 	drawSkid(leftSide);
+
 	/*drawWindow(rightSide);
 	drawWindow(leftSide);*/
 
+	// Top rotors
 	drawTopRotors();
+
+	// Tail
 	drawTail();
 
 	glPopMatrix();
@@ -880,15 +890,20 @@ void drawWindshield(void)
 
 	// move forwards and up
 	glTranslated(-WINDSHIELD_LENGTH / 2, 0.4, 1.5);
+	
 	// rotate
 	glRotated(90, 0.0, 1.0, 0.0);
+	
 	// cylinder acting as windshield
 	gluCylinder(cylinderQuadric, WINDSHIELD_RADIUS, WINDSHIELD_RADIUS, WINDSHIELD_LENGTH, 50, 50);
 
+	// ball to cap windshield
 	gluSphere(sphereQuadric, WINDSHIELD_RADIUS, 50, 50);
 
+	// move to the other end of the winshield
 	glTranslated(0.0, 0.0, WINDSHIELD_LENGTH);
-
+	
+	// ball to cap windshield
 	gluSphere(sphereQuadric, WINDSHIELD_RADIUS, 50, 50);
 
 	glPopMatrix();
@@ -905,9 +920,13 @@ void drawSkidConnector(enum Side side)
 	// move to the left or right, into position 
 	glTranslated(-BODY_RADIUS / 2 * side, 0, 0);
 
-	// connector poles
+	// move down and to the side
 	glTranslated(2.0 * side, -BODY_RADIUS * 0.75, 0.0);
+	
+	// rotate to verticle
 	glRotated(90, 1.0, 0.0, 0.0);
+
+	// connecter cylinder
 	gluCylinder(cylinderQuadric, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_RADIUS, SKID_CONNECTOR_LENGTH, 50, 50);
 
 	glPopMatrix();
@@ -965,13 +984,19 @@ void drawTopRotors(void)
 
 	// stay or move to the front
 	glTranslated(0.0, BODY_RADIUS + 0.2, 0.0);
+	
 	// blades
 	for (int i = 1; i < NUMBER_OF_BLADES+1; i++)
 	{
 		drawBlade(i);
 	}
+
+	// scale the cube 
 	glScaled(0.2, 1.0, 0.2);
+	
+	// cube in the middle of rotors
 	glutSolidCube(ROTOR_CUBE_SIZE);
+
 	glPopMatrix();
 }
 
@@ -981,10 +1006,13 @@ void drawBlade(int num)
 
 	// stay or move to the front
 	glTranslated(0.0, ROTOR_CUBE_SIZE/2 - 0.2, 0.0);
+	
 	// rotate based on which blade
 	glRotated(360 / NUMBER_OF_BLADES * num + rotorAngle, 0.0, 1.0, 0.0);
+	
 	// flatten cube to make it look like a blade
 	glScaled(1.0, 0.02, 0.05);
+	
 	// blade
 	glutSolidCube(ROTOR_BLADE_SIZE);
 
@@ -994,15 +1022,24 @@ void drawBlade(int num)
 void drawTail(void)
 {	
 	glPushMatrix();	
-	
-	drawTailRotors();
-	
+
 	glColor3fv(POLICE_BLUE);
 
+	// rotate to the back
 	glRotated(180, 1.0, 0.0, 0.0);
+	
+	// draw the tail cylinder, getting smaller at the end
 	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP_RADIUS, TAIL_LENGTH, 20, 20);
+	
+	// move to the end of the tail
 	glTranslated(0.0, 0.0, TAIL_LENGTH);
+
+	// cap the tail
 	gluSphere(sphereQuadric, TAIL_TIP_RADIUS, 50, 50);
+
+
+	// tail rotors
+	drawTailRotors();
 
 	glPopMatrix();
 }
@@ -1012,9 +1049,10 @@ void drawTailRotors(void)
 	glColor3fv(BROWN);
 
 	glPushMatrix();
-
-	glRotated(180, 1.0, 1.0, 0.0);
-	glTranslated(0.0, TAIL_TIP_RADIUS * 1.25, -BODY_RADIUS + TAIL_LENGTH * 1.25 );
+	
+	// turn to the side
+	glRotated(90, 0.0, 0.0, 1.0);
+	glTranslated(0.0, TAIL_TIP_RADIUS * 1.35, 0.0);
 
 	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
 	// blades
