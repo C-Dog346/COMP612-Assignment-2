@@ -1052,15 +1052,23 @@ void drawTailRotors(void)
 	
 	// turn to the side
 	glRotated(90, 0.0, 0.0, 1.0);
+
+	// move out to the side of the tail
 	glTranslated(0.0, TAIL_TIP_RADIUS * 1.35, 0.0);
 
+	// scale the rotor
 	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
+	
 	// blades
 	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
 	{
 		drawBlade(i);
 	}
+	
+	// scale rotor cube
 	glScaled(0.2, 1.0 , 0.2);
+	
+	// cube
 	glutSolidCube(ROTOR_CUBE_SIZE);
 
 	glPopMatrix();
