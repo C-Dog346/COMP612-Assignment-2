@@ -889,7 +889,7 @@ void drawWindshield(void)
 	glPushMatrix();
 
 	// move forwards and up
-	glTranslated(-WINDSHIELD_LENGTH / 2, 0.4, 1.5);
+	glTranslated(-WINDSHIELD_LENGTH / 2, WINDSHIELD_LENGTH / 3.75, WINDSHIELD_LENGTH);
 	
 	// rotate
 	glRotated(90, 0.0, 1.0, 0.0);
@@ -921,7 +921,7 @@ void drawSkidConnector(enum Side side)
 	glTranslated(-BODY_RADIUS / 2 * side, 0, 0);
 
 	// move down and to the side
-	glTranslated(2.0 * side, -BODY_RADIUS * 0.75, 0.0);
+	glTranslated(BODY_RADIUS * side, -BODY_RADIUS * 0.75, 0.0);
 	
 	// rotate to verticle
 	glRotated(90, 1.0, 0.0, 0.0);
