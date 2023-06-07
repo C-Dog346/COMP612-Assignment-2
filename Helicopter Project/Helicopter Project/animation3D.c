@@ -159,9 +159,13 @@ void drawBlade(int num);
 void drawTail(void);
 void drawTailRotors(void);
 void drawTailFin(void);
+void drawSpotLight(void);
 
 // camera
 void updateCameraPos(void);
+
+// spotlight
+void setupSpotlight(void);
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -177,6 +181,9 @@ enum Side {
 	frontSide = 1,
 	backSide = -1,
 };
+
+// down
+const float down[] = {0.0f, -1.0f, -1.0f};
 
 // window dimensions
 GLint windowWidth = 800;
@@ -194,7 +201,7 @@ GLUquadricObj* cylinderQuadric;
 
 
 // rotor blade speed management
-float rotorSpeed = 0.0f;
+float rotorSpeed = 750.0f;
 float rotorAngle = 1.0f;
 
 // hierachical model setup values
@@ -718,6 +725,10 @@ void think(void)
 		rotorSpeed += ROTOR_ACCELRATION * FRAME_TIME_SEC;
 	}
 
+	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - BODY_RADIUS, helicopterLocation[2], 1.0f};
+
+	glLightfv(GL_LIGHT1, GL_POSITION, spotLightPosition);
+
 	// I didn't like the idea of this number getting stupidly huge so I wanted to reset it to avoid bugs
 	if (rotorAngle > 360.0f)
 		rotorAngle = 0.0f;
@@ -742,8 +753,14 @@ void initLights(void)
 	GLfloat globalAmbient[] = { 0.4f, 0.4f, 0.4f, 1 };
 	GLfloat lightPosition[] = { 5.0f, 5.0f, 5.0f, 1.0f };
 	GLfloat ambientLight[] = { 0, 0, 0, 1 };
-	GLfloat diffuseLight[] = { 1, 1, 1, 1 };
+	GLfloat diffuseLight[] = { 0.5f, 0.5f, 0.5f, 1 };
 	GLfloat specularLight[] = { 1, 1, 1, 1 };
+
+	// Set up light parameters
+	GLfloat spotLight[] = { 1.0, 1.0, 1.0, 1.0 };
+
+	float spotLightExponent = 5.0f;
+	float spotLightCutoff = 60.0f;
 
 	// Configure global ambient lighting.
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
@@ -754,9 +771,21 @@ void initLights(void)
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
 
+	// Configure Light 1 (spotlight).
+	glLightfv(GL_LIGHT1, GL_POSITION, lightPosition);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, ambientLight);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, spotLight);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, specularLight);
+
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, down);
+	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, spotLightExponent);
+	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, spotLightCutoff);
+	
+
 	// Enable lighting
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 
 	// Make GL normalize the normal vectors we supply.
 	glEnable(GL_NORMALIZE);
@@ -817,7 +846,7 @@ void drawGrid(void)
 {
 	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	glColor3fv(PALE_GREEN); //pale green -- better to have a const
+	glColor3fv(BATMAN_GREY); //pale green -- better to have a const
 
 
 	float origin = -GRID_SIZE / 2.0f;
@@ -844,7 +873,6 @@ void drawGrid(void)
 
 void drawHelicopter()
 {
-
 	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
 
 	glPushMatrix();
@@ -1074,8 +1102,6 @@ void drawTailRotors(void)
 	glPopMatrix();
 }
 
-void drawTailFin(void)
-{
 
-}
+
 /******************************************************************************/
