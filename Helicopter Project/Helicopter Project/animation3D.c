@@ -199,6 +199,20 @@ int debug = 0;
 GLUquadricObj* sphereQuadric;
 GLUquadricObj* cylinderQuadric;
 
+// textures
+typedef struct {
+	int width;
+	int height;
+	GLubyte* data;
+} PPMImage;
+
+PPMImage image(char* fileName);
+
+PPMImage water;
+PPMImage grass;
+
+GLuint waterId;
+GLuint grassId;
 
 // rotor blade speed management
 float rotorSpeed = 750.0f;
@@ -625,15 +639,38 @@ void init(void)
 	// set background color to be black
 	glClearColor(0, 0, 0, 1.0);
 	
+	// Anything that relies on lighting or specifies normals must be initialised after initLights.
 	initLights();
 
-	// Anything that relies on lighting or specifies normals must be initialised after initLights.
+	//Enable use of fog
+	glEnable(GL_FOG);
+
+	// define the color and density of the fog
+	GLfloat fogColor[4] = { 0.4f, 0.4f, 0.4f, 0.4f};
+	GLfloat fogDensity = 0.1f;
+	// set the color of the fog
+	glFogfv(GL_FOG_COLOR, fogColor);
+	//set the fog mode to be exponential
+	glFogf(GL_FOG_MODE, GL_EXP);
+	//set the fog density
+	glFogf(GL_FOG_DENSITY, fogDensity);
 	
 	//create the quadric for drawing the sphere
 	sphereQuadric = gluNewQuadric();
 
 	//create the quadric for drawing the cylinder
 	cylinderQuadric = gluNewQuadric();
+
+	// Load PPM image
+	water = image("Texture.ppm");
+	glGenTextures(1, &waterId);
+	glBindTexture(GL_TEXTURE_2D, waterId);
+
+	grass = image("Texture.ppm");
+	glGenTextures(1, &grassId);
+	glBindTexture(GL_TEXTURE_2D, grassId);
+
+
 }
 
 /*
@@ -810,6 +847,122 @@ void updateCameraPos(void)
 		cameraPosition[2] = helicopterLocation[2] - cosf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
 	}
 
+}
+
+PPMImage image(char* fileName) // loads a PPM image
+{
+	// declare ppmimage
+	PPMImage image;
+
+	// the ID of the image file
+	FILE* fileID;
+
+	GLubyte* imageData;
+
+	// width and height
+	int width, height;
+
+	// maxValue
+	int maxValue;
+
+	// total number of pixels in the image
+	int totalPixels;
+
+	// temporary character
+	char tempChar;
+
+	// counter variable for the current pixel in the image
+	int i;
+
+	// array for reading in header information
+	char headerLine[100];
+
+	// if the original values are larger than 255
+	float RGBScaling;
+
+	// temporary variables for reading in the red, green and blue data of each pixel
+	int red, green, blue;
+
+	// open the image file for reading
+	if (fopen_s(&fileID, filename, "r") != 0) {
+		printf("Failed to open the file.\n");
+		exit(0);
+	}
+
+	// read in the first header line
+	// - "%[^\n]"  matches a string of all characters not equal to the new line character ('\n')
+	// - so we are just reading everything up to the first line break
+	fscanf_s(fileID, "%[^\n] ", headerLine, sizeof(headerLine));
+
+	// make sure that the image begins with 'P3', which signifies a PPM file
+	if ((headerLine[0] != 'P') || (headerLine[1] != '3')) {
+		printf("This is not a PPM file!\n");
+		exit(0);
+	}
+
+	// read in the first character of the next line
+	fscanf_s(fileID, "%c", &tempChar, sizeof(tempChar));
+
+	// while we still have comment lines (which begin with #)
+	while (tempChar == '#') {
+		// read in the comment
+		fscanf_s(fileID, "%[^\n] ", headerLine, sizeof(headerLine));
+
+		// read in the first character of the next line
+		fscanf_s(fileID, "%c", &tempChar, sizeof(tempChar));
+	}
+
+	// the last one was not a comment character '#', so we need to put it back into the file stream (undo)
+	ungetc(tempChar, fileID);
+
+	// read in the image hieght, width and the maximum value
+	fscanf_s(fileID, "%d %d %d", &width, &height, &maxValue);
+
+	// compute the total number of pixels in the image
+	totalPixels = width * height;
+
+	// allocate enough memory for the image (3*) because of the RGB data
+	imageData = (GLubyte*)malloc(3 * sizeof(GLuint) * totalPixels);
+
+	// determine the scaling for RGB values
+	RGBScaling = 255.0f / maxValue;
+
+	// if the maxValue is 255 then we do not need to scale the
+	// image data values to be in the range or 0 to 255
+	if (maxValue == 255) {
+		for (i = 0; i < totalPixels; i++) {
+			// read in the current pixel from the file
+			fscanf_s(fileID, "%d %d %d", &red, &green, &blue);
+
+			// store the red, green and blue data of the current pixel in the data array
+			imageData[3 * totalPixels - 3 * i - 3] = red;
+			imageData[3 * totalPixels - 3 * i - 2] = green;
+			imageData[3 * totalPixels - 3 * i - 1] = blue;
+		}
+	}
+	else { // need to scale up the data values
+		for (i = 0; i < totalPixels; i++) {
+			// read in the current pixel from the file
+			fscanf_s(fileID, "%d %d %d", &red, &green, &blue);
+
+			// store the red, green and blue data of the current pixel in the data array
+			imageData[3 * totalPixels - 3 * i - 3] = (GLubyte)red * (GLubyte)RGBScaling;
+			imageData[3 * totalPixels - 3 * i - 2] = (GLubyte)green * (GLubyte)RGBScaling;
+			imageData[3 * totalPixels - 3 * i - 1] = (GLubyte)blue * (GLubyte)RGBScaling;
+		}
+	}
+
+
+
+	// close the image file
+	fclose(fileID);
+
+	// construct ppmimage
+	image.width = width;
+	image.height = height;
+	image.data = imageData;
+
+	return image;
 }
 
 void drawOrigin(void)
@@ -1102,6 +1255,35 @@ void drawTailRotors(void)
 	glPopMatrix();
 }
 
+void makeWater(void)
+{
+	// Set texture parameters
+	glEnable(GL_TEXTURE_2D);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	// Specify the texture image
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water.width, water.height, 0, GL_RGB, GL_UNSIGNED_BYTE, water.data);
+
+	glDisable(GL_TEXTURE_2D);
+	glDeleteTextures(1, &waterId);
+}
+
+void makeGrass(void)
+{
+	// Set texture parameters
+	glEnable(GL_TEXTURE_2D);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	// Specify the texture image
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grass.width, grass.height, 0, GL_RGB, GL_UNSIGNED_BYTE, grass.data);
+
+	glDisable(GL_TEXTURE_2D);
+	glDeleteTextures(1, &grassId);
+}
 
 
 /******************************************************************************/
