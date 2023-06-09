@@ -166,6 +166,9 @@ void drawBoat(void);
 void drawBoatBase(void);
 void drawBoatCabin(void);
 
+// move boat
+void moveBoat(void);
+
 // camera
 void updateCameraPos(void);
 
@@ -291,8 +294,9 @@ float helicopterFacing = 0.0f;
 const float helicopterMoveSpeed = 10.0f;
 
 //model animation variables (position, heading, speed (metres per second)) for the boat
-float boatLocation[] = { GRID_SIZE / 2 * 0.9, -0.25f, GRID_SIZE / 2 * 0.9 };
-const float boatMoveSpeed = 10.0f;
+float boatLocation[] = { GRID_SIZE / 2 * 0.7, -0.25f, GRID_SIZE / 2 * 0.8 };
+float boatFacing = 0.0f;
+const float boatMoveSpeed = 5.0f;
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -791,6 +795,8 @@ void think(void)
 	// rotor spin
 	rotorAngle += rotorSpeed * FRAME_TIME_SEC;
 
+	moveBoat();
+
 	// update the camera position to follow the helicopter
 	updateCameraPos();
 }
@@ -864,7 +870,17 @@ void updateCameraPos(void)
 		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
 		cameraPosition[2] = helicopterLocation[2] - cosf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
 	}
+}
 
+void moveBoat(void)
+{
+	boatFacing += 50.0f * FRAME_TIME_SEC; // 50 RPM
+
+	float xMove = sinf((boatFacing) * (PI / 180)) * boatMoveSpeed;
+	float zMove = cosf((boatFacing) * (PI / 180)) * boatMoveSpeed;
+
+	boatLocation[0] -= xMove * FRAME_TIME_SEC;
+	boatLocation[2] -= zMove * FRAME_TIME_SEC;
 }
 
 PPMImage loadPPM(char* filename) // loads a PPM image
@@ -1315,11 +1331,13 @@ void drawTailRotors(void)
 	glPopMatrix();
 }
 
-void drawBoat(void) {
+void drawBoat(void)
+{
 	glPushMatrix();
 
 	// translate boat
 	glTranslated(boatLocation[0], boatLocation[1], boatLocation[2]);
+	glRotated(boatFacing, 0.0, 1.0, 0.0);
 
 	// draw base
 	drawBoatBase();
@@ -1328,7 +1346,8 @@ void drawBoat(void) {
 	glPopMatrix();
 }
 
-void drawBoatBase(void) {
+void drawBoatBase(void)
+{
 	glColor3fv(BLUE);
 
 	// scale base cube
@@ -1344,7 +1363,8 @@ void drawBoatBase(void) {
 	glPopMatrix();
 }
 
-void drawBoatCabin(void) {
+void drawBoatCabin(void)
+{
 	glColor3fv(RED);
 
 	// translate upwards
