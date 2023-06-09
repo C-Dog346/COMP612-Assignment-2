@@ -147,7 +147,7 @@ void drawOrigin(void);
 void drawGrid(void);
 
 
-// hierarchical model functions to position and scale parts
+// hierarchical model functions to position and scale parts for helicopter
 void drawHelicopter();
 void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
@@ -160,6 +160,9 @@ void drawTail(void);
 void drawTailRotors(void);
 void drawTailFin(void);
 void drawSpotLight(void);
+
+// boat
+void drawBoat(void);
 
 // camera
 void updateCameraPos(void);
@@ -1296,34 +1299,8 @@ void drawTailRotors(void)
 	glPopMatrix();
 }
 
-void makeWater(void)
-{
-	// Set texture parameters
-	glEnable(GL_TEXTURE_2D);
+void drawBoat(void) {
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	// Specify the texture image
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water.width, water.height, 0, GL_RGB, GL_UNSIGNED_BYTE, water.data);
-
-	glDisable(GL_TEXTURE_2D);
-	glDeleteTextures(1, &waterId);
-}
-
-void makeGrass(void)
-{
-	// Set texture parameters
-	glEnable(GL_TEXTURE_2D);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	// Specify the texture image
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grass.width, grass.height, 0, GL_RGB, GL_UNSIGNED_BYTE, grass.data);
-
-	glDisable(GL_TEXTURE_2D);
-	glDeleteTextures(1, &grassId);
 }
 
 
