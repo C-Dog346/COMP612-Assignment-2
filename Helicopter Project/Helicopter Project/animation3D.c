@@ -183,7 +183,7 @@ enum Side {
 };
 
 // down
-const float down[] = {0.0f, -1.0f, -1.0f};
+const float down[] = { 0.0f, -1.0f, -1.0f };
 
 // window dimensions
 GLint windowWidth = 800;
@@ -206,7 +206,7 @@ typedef struct {
 	GLubyte* data;
 } PPMImage;
 
-PPMImage image(char* fileName);
+PPMImage loadPPM(char* fileName);
 
 PPMImage water;
 PPMImage grass;
@@ -271,6 +271,7 @@ const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
 const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
 const GLfloat POLICE_BLUE[3] = { 0.0f, 0.0f, 0.40f };
 const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
+const GLfloat WHITE[3] = { 1.0f, 1.0f, 1.0f };
 
 //model animation variables (position, heading, speed (metres per second))
 float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
@@ -413,7 +414,7 @@ void keyPressed(unsigned char key, int x, int y)
 		motionKeyStates.MoveRight = KEYSTATE_DOWN;
 		keyboardMotion.Sway = MOTION_RIGHT;
 		break;
-	
+
 		/*
 			Other Keyboard Functions (add any new character key controls here)
 
@@ -431,7 +432,7 @@ void keyPressed(unsigned char key, int x, int y)
 		exit(0);
 		break;
 
-	// debug camera options used primarily for inspecting the helicopter from various angles
+		// debug camera options used primarily for inspecting the helicopter from various angles
 	case DEBUG_CAMERA:
 		debug = debug ? 0 : 1;
 		if (debug)
@@ -445,7 +446,7 @@ void keyPressed(unsigned char key, int x, int y)
 		}
 		break;
 	case DEBUG_CAMERA_DEFAULT:
-		cameraOffset[1] = 5.0f; 
+		cameraOffset[1] = 5.0f;
 		cameraOffset[2] = 0.0f;
 		break;
 	case DEBUG_CAMERA_FRONT:
@@ -638,7 +639,7 @@ void init(void)
 
 	// set background color to be black
 	glClearColor(0, 0, 0, 1.0);
-	
+
 	// Anything that relies on lighting or specifies normals must be initialised after initLights.
 	initLights();
 
@@ -646,15 +647,15 @@ void init(void)
 	glEnable(GL_FOG);
 
 	// define the color and density of the fog
-	GLfloat fogColor[4] = { 0.4f, 0.4f, 0.4f, 0.4f};
-	GLfloat fogDensity = 0.1f;
+	GLfloat fogColor[4] = { 0.25f, 0.25f, 0.25f, 0.25f };
+	GLfloat fogDensity = 0.025f;
 	// set the color of the fog
 	glFogfv(GL_FOG_COLOR, fogColor);
 	//set the fog mode to be exponential
 	glFogf(GL_FOG_MODE, GL_EXP);
 	//set the fog density
 	glFogf(GL_FOG_DENSITY, fogDensity);
-	
+
 	//create the quadric for drawing the sphere
 	sphereQuadric = gluNewQuadric();
 
@@ -662,15 +663,13 @@ void init(void)
 	cylinderQuadric = gluNewQuadric();
 
 	// Load PPM image
-	water = image("Texture.ppm");
-	glGenTextures(1, &waterId);
-	glBindTexture(GL_TEXTURE_2D, waterId);
-
-	grass = image("Texture.ppm");
+	grass = loadPPM("P3grass.ppm");
 	glGenTextures(1, &grassId);
 	glBindTexture(GL_TEXTURE_2D, grassId);
 
-
+	water = loadPPM("P3water.ppm");
+	glGenTextures(1, &waterId);
+	glBindTexture(GL_TEXTURE_2D, waterId);
 }
 
 /*
@@ -762,7 +761,7 @@ void think(void)
 		rotorSpeed += ROTOR_ACCELRATION * FRAME_TIME_SEC;
 	}
 
-	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - BODY_RADIUS, helicopterLocation[2], 1.0f};
+	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - BODY_RADIUS, helicopterLocation[2], 1.0f };
 
 	glLightfv(GL_LIGHT1, GL_POSITION, spotLightPosition);
 
@@ -788,7 +787,7 @@ void initLights(void)
 {
 	// Simple lighting setup
 	GLfloat globalAmbient[] = { 0.4f, 0.4f, 0.4f, 1 };
-	GLfloat lightPosition[] = { 5.0f, 5.0f, 5.0f, 1.0f };
+	GLfloat lightPosition[] = { 100.0f, 100.0f, 100.0f, 1.0f };
 	GLfloat ambientLight[] = { 0, 0, 0, 1 };
 	GLfloat diffuseLight[] = { 0.5f, 0.5f, 0.5f, 1 };
 	GLfloat specularLight[] = { 1, 1, 1, 1 };
@@ -817,7 +816,7 @@ void initLights(void)
 	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, down);
 	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, spotLightExponent);
 	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, spotLightCutoff);
-	
+
 
 	// Enable lighting
 	glEnable(GL_LIGHTING);
@@ -849,7 +848,7 @@ void updateCameraPos(void)
 
 }
 
-PPMImage image(char* fileName) // loads a PPM image
+PPMImage loadPPM(char* filename) // loads a PPM image
 {
 	// declare ppmimage
 	PPMImage image;
@@ -883,7 +882,8 @@ PPMImage image(char* fileName) // loads a PPM image
 	// temporary variables for reading in the red, green and blue data of each pixel
 	int red, green, blue;
 
-	// open the image file for reading
+	// open the image file for reading - note this is hardcoded would be better to provide a parameter which
+	// is the file name. There are 3 PPM files you can try out mount03, sky08 and sea02.
 	if (fopen_s(&fileID, filename, "r") != 0) {
 		printf("Failed to open the file.\n");
 		exit(0);
@@ -896,7 +896,7 @@ PPMImage image(char* fileName) // loads a PPM image
 
 	// make sure that the image begins with 'P3', which signifies a PPM file
 	if ((headerLine[0] != 'P') || (headerLine[1] != '3')) {
-		printf("This is not a PPM file!\n");
+		printf("This is not a PPM file!\n %c %c", headerLine[0], headerLine[1]);
 		exit(0);
 	}
 
@@ -999,28 +999,69 @@ void drawGrid(void)
 {
 	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	glColor3fv(BATMAN_GREY); //pale green -- better to have a const
+	glColor3fv(WHITE); //pale green -- better to have a const
 
+	glEnable(GL_TEXTURE_2D);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	// Specify the texture image
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grass.width, grass.height, 0, GL_RGB, GL_UNSIGNED_BYTE, grass.data);
 
 	float origin = -GRID_SIZE / 2.0f;
 
-	for (float z = origin; z < GRID_SIZE / 2; z += GRID_SQUARE_SIZE)
+	for (float z = origin; z < (GRID_SIZE / 2.0f) * 0.5f; z += GRID_SQUARE_SIZE)
 	{
-		for (float x = origin; x < GRID_SIZE / 2; x += GRID_SQUARE_SIZE)
+		for (float x = origin; x < GRID_SIZE / 2.0f; x += GRID_SQUARE_SIZE)
 		{
-			// chagne the 'origin' in vertexes to be based on x & y
 			glBegin(GL_QUADS);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(0.0f, 1.0f); // coord for texture
 			glVertex3f(x, 0.0f, z);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(1.0f, 1.0f); // coord for texture
 			glVertex3f(x, 0.0f, z + GRID_SQUARE_SIZE);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(1.0f, 0.0f); // coord for texture
 			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z + GRID_SQUARE_SIZE);
 			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(0.0f, 0.0f); // coord for texture
 			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z);
 			glEnd();
 		}
 	}
+
+	glDeleteTextures(1, &grassId);
+
+	// Specify the texture image
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water.width, water.height, 0, GL_RGB, GL_UNSIGNED_BYTE, water.data);
+
+	origin = -GRID_SIZE / 2.0f;
+
+	for (float z = origin; z < GRID_SIZE / 2.0f; z += GRID_SQUARE_SIZE)
+	{
+		for (float x = origin; x < GRID_SIZE / 2.0f; x += GRID_SQUARE_SIZE)
+		{
+			// chagne the 'origin' in vertexes to be based on x & y
+			glBegin(GL_QUADS);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(0.0f, 1.0f); // coord for texture
+			glVertex3f(x, 0.0f, z);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(1.0f, 1.0f); // coord for texture
+			glVertex3f(x, 0.0f, z + GRID_SQUARE_SIZE);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(1.0f, 0.0f); // coord for texture
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z + GRID_SQUARE_SIZE);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(0.0f, 0.0f); // coord for texture
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z);
+			glEnd();
+		}
+	}
+
+	glDeleteTextures(1, &waterId);
 }
 
 
@@ -1071,10 +1112,10 @@ void drawWindshield(void)
 
 	// move forwards and up
 	glTranslated(-WINDSHIELD_LENGTH / 2, WINDSHIELD_LENGTH / 3.75, WINDSHIELD_LENGTH);
-	
+
 	// rotate
 	glRotated(90, 0.0, 1.0, 0.0);
-	
+
 	// cylinder acting as windshield
 	gluCylinder(cylinderQuadric, WINDSHIELD_RADIUS, WINDSHIELD_RADIUS, WINDSHIELD_LENGTH, 50, 50);
 
@@ -1083,7 +1124,7 @@ void drawWindshield(void)
 
 	// move to the other end of the winshield
 	glTranslated(0.0, 0.0, WINDSHIELD_LENGTH);
-	
+
 	// ball to cap windshield
 	gluSphere(sphereQuadric, WINDSHIELD_RADIUS, 50, 50);
 
@@ -1103,7 +1144,7 @@ void drawSkidConnector(enum Side side)
 
 	// move down and to the side
 	glTranslated(BODY_RADIUS * side, -BODY_RADIUS * 0.75, 0.0);
-	
+
 	// rotate to verticle
 	glRotated(90, 1.0, 0.0, 0.0);
 
@@ -1137,7 +1178,7 @@ void drawSkid(enum Side side)
 void drawSkidEnding(enum Side xSide, enum Side zSide)
 {
 	glPushMatrix();
-	
+
 	// stay or move to the front
 	glTranslated(0, 0, zSide == frontSide ? SKID_LENGTH : 0);
 	// ball
@@ -1153,28 +1194,28 @@ void drawWindow(enum Side side) {
 	glPushMatrix();
 
 
-//	glutSolidCube(WINDSCREEN_);
+	//	glutSolidCube(WINDSCREEN_);
 
 	glPopMatrix();
 
 }
 
-void drawTopRotors(void) 
+void drawTopRotors(void)
 {
 	glPushMatrix();
 
 	// stay or move to the front
 	glTranslated(0.0, BODY_RADIUS + 0.2, 0.0);
-	
+
 	// blades
-	for (int i = 1; i < NUMBER_OF_BLADES+1; i++)
+	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
 	{
 		drawBlade(i);
 	}
 
 	// scale the cube 
 	glScaled(0.2, 1.0, 0.2);
-	
+
 	// cube in the middle of rotors
 	glutSolidCube(ROTOR_CUBE_SIZE);
 
@@ -1186,14 +1227,14 @@ void drawBlade(int num)
 	glPushMatrix();
 
 	// stay or move to the front
-	glTranslated(0.0, ROTOR_CUBE_SIZE/2 - 0.2, 0.0);
-	
+	glTranslated(0.0, ROTOR_CUBE_SIZE / 2 - 0.2, 0.0);
+
 	// rotate based on which blade
 	glRotated(360 / NUMBER_OF_BLADES * num + rotorAngle, 0.0, 1.0, 0.0);
-	
+
 	// flatten cube to make it look like a blade
 	glScaled(1.0, 0.02, 0.05);
-	
+
 	// blade
 	glutSolidCube(ROTOR_BLADE_SIZE);
 
@@ -1201,17 +1242,17 @@ void drawBlade(int num)
 }
 
 void drawTail(void)
-{	
-	glPushMatrix();	
+{
+	glPushMatrix();
 
 	glColor3fv(POLICE_BLUE);
 
 	// rotate to the back
 	glRotated(180, 1.0, 0.0, 0.0);
-	
+
 	// draw the tail cylinder, getting smaller at the end
 	gluCylinder(cylinderQuadric, TAIL_BASE, TAIL_TIP_RADIUS, TAIL_LENGTH, 20, 20);
-	
+
 	// move to the end of the tail
 	glTranslated(0.0, 0.0, TAIL_LENGTH);
 
@@ -1230,7 +1271,7 @@ void drawTailRotors(void)
 	glColor3fv(BROWN);
 
 	glPushMatrix();
-	
+
 	// turn to the side
 	glRotated(90, 0.0, 0.0, 1.0);
 
@@ -1239,16 +1280,16 @@ void drawTailRotors(void)
 
 	// scale the rotor
 	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
-	
+
 	// blades
 	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
 	{
 		drawBlade(i);
 	}
-	
+
 	// scale rotor cube
-	glScaled(0.2, 1.0 , 0.2);
-	
+	glScaled(0.2, 1.0, 0.2);
+
 	// cube
 	glutSolidCube(ROTOR_CUBE_SIZE);
 
