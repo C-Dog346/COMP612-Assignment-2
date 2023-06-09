@@ -147,7 +147,7 @@ void drawOrigin(void);
 void drawGrid(void);
 
 
-// hierarchical model functions to position and scale parts
+// hierarchical model functions to position and scale parts for helicopter
 void drawHelicopter();
 void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
@@ -160,6 +160,14 @@ void drawTail(void);
 void drawTailRotors(void);
 void drawTailFin(void);
 void drawSpotLight(void);
+
+// hierarchical model functions to position and scale parts for boat
+void drawBoat(void);
+void drawBoatBase(void);
+void drawBoatCabin(void);
+
+// move boat
+void moveBoat(void);
 
 // camera
 void updateCameraPos(void);
@@ -258,6 +266,11 @@ float rotorAngle = 1.0f;
 #define GRID_SQUARE_SIZE 1.0f
 #define GRID_SIZE 100.0f
 
+// boat
+// base
+#define BASE_SIZE 5.0f
+#define CABIN_SIZE 2.0f
+
 #define PI 3.1415f
 
 // camera distance
@@ -272,11 +285,18 @@ const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
 const GLfloat POLICE_BLUE[3] = { 0.0f, 0.0f, 0.40f };
 const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 const GLfloat WHITE[3] = { 1.0f, 1.0f, 1.0f };
+const GLfloat RED[3] = { 1.0f, 0.0f, 0.0f };
+const GLfloat BLUE[3] = { 0.0f, 0.0f, 1.0f };
 
-//model animation variables (position, heading, speed (metres per second))
+//model animation variables (position, heading, speed (metres per second)) for the helicopter
 float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
-const float moveSpeed = 10.0f;
+const float helicopterMoveSpeed = 10.0f;
+
+//model animation variables (position, heading, speed (metres per second)) for the boat
+float boatLocation[] = { GRID_SIZE / 2 * 0.7, -0.25f, GRID_SIZE / 2 * 0.8 };
+float boatFacing = 0.0f;
+const float boatMoveSpeed = 5.0f;
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -354,6 +374,9 @@ void display(void)
 
 	// draw helicopter
 	drawHelicopter();
+
+	// draw the boat
+	drawBoat();
 
 	// swap the drawing buffers
 	glutSwapBuffers();
@@ -734,16 +757,16 @@ void think(void)
 		}
 		if (keyboardMotion.Surge != MOTION_NONE) {
 			/* TEMPLATE: Move your object backward if .Surge < 0, or forward if .Surge > 0 */
-			float xMove = sinf(helicopterFacing * (PI / 180)) * moveSpeed;
-			float zMove = cosf(helicopterFacing * (PI / 180)) * moveSpeed;
+			float xMove = sinf(helicopterFacing * (PI / 180)) * helicopterMoveSpeed;
+			float zMove = cosf(helicopterFacing * (PI / 180)) * helicopterMoveSpeed;
 
 			helicopterLocation[0] += xMove * FRAME_TIME_SEC * keyboardMotion.Surge;
 			helicopterLocation[2] += zMove * FRAME_TIME_SEC * keyboardMotion.Surge;
 		}
 		if (keyboardMotion.Sway != MOTION_NONE) {
 			/* TEMPLATE: Move (strafe) your object left if .Sway < 0, or right if .Sway > 0 */
-			float xMove = sinf((helicopterFacing + 90.0f) * (PI / 180)) * moveSpeed;
-			float zMove = cosf((helicopterFacing + 90.0f) * (PI / 180)) * moveSpeed;
+			float xMove = sinf((helicopterFacing + 90.0f) * (PI / 180)) * helicopterMoveSpeed;
+			float zMove = cosf((helicopterFacing + 90.0f) * (PI / 180)) * helicopterMoveSpeed;
 
 			helicopterLocation[0] -= xMove * FRAME_TIME_SEC * keyboardMotion.Sway;
 			helicopterLocation[2] -= zMove * FRAME_TIME_SEC * keyboardMotion.Sway;
@@ -752,9 +775,9 @@ void think(void)
 			/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
 			// stops the helicopter from moving below the grid
 			if (helicopterLocation[1] > START_HEIGHT)
-				helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+				helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
 			else if (keyboardMotion.Heave > 0)
-				helicopterLocation[1] += keyboardMotion.Heave * moveSpeed / 2 * FRAME_TIME_SEC;
+				helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
 		}
 	}
 	else {
@@ -771,6 +794,8 @@ void think(void)
 
 	// rotor spin
 	rotorAngle += rotorSpeed * FRAME_TIME_SEC;
+
+	moveBoat();
 
 	// update the camera position to follow the helicopter
 	updateCameraPos();
@@ -845,7 +870,17 @@ void updateCameraPos(void)
 		cameraPosition[1] = helicopterLocation[1] + cameraOffset[1]; //track bird on heave only
 		cameraPosition[2] = helicopterLocation[2] - cosf(helicopterFacing * (PI / 180)) * CAMERA_DISTANCE;
 	}
+}
 
+void moveBoat(void)
+{
+	boatFacing += 50.0f * FRAME_TIME_SEC; // 50 RPM
+
+	float xMove = sinf((boatFacing) * (PI / 180)) * boatMoveSpeed;
+	float zMove = cosf((boatFacing) * (PI / 180)) * boatMoveSpeed;
+
+	boatLocation[0] -= xMove * FRAME_TIME_SEC;
+	boatLocation[2] -= zMove * FRAME_TIME_SEC;
 }
 
 PPMImage loadPPM(char* filename) // loads a PPM image
@@ -1296,35 +1331,52 @@ void drawTailRotors(void)
 	glPopMatrix();
 }
 
-void makeWater(void)
+void drawBoat(void)
 {
-	// Set texture parameters
-	glEnable(GL_TEXTURE_2D);
+	glPushMatrix();
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	// translate boat
+	glTranslated(boatLocation[0], boatLocation[1], boatLocation[2]);
+	glRotated(boatFacing, 0.0, 1.0, 0.0);
 
-	// Specify the texture image
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water.width, water.height, 0, GL_RGB, GL_UNSIGNED_BYTE, water.data);
+	// draw base
+	drawBoatBase();
 
-	glDisable(GL_TEXTURE_2D);
-	glDeleteTextures(1, &waterId);
+
+	glPopMatrix();
 }
 
-void makeGrass(void)
+void drawBoatBase(void)
 {
-	// Set texture parameters
-	glEnable(GL_TEXTURE_2D);
+	glColor3fv(BLUE);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	// scale base cube
+	glScaled(0.4, 0.5, 0.7);
 
-	// Specify the texture image
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grass.width, grass.height, 0, GL_RGB, GL_UNSIGNED_BYTE, grass.data);
+	// cube
+	glutSolidCube(BASE_SIZE);
 
-	glDisable(GL_TEXTURE_2D);
-	glDeleteTextures(1, &grassId);
+
+	// draw cabin
+	drawBoatCabin();
+
+	glPopMatrix();
 }
 
+void drawBoatCabin(void)
+{
+	glColor3fv(RED);
+
+	// translate upwards
+	glTranslated(0.0, 3.0, 0.5);
+
+	// scale base cube
+	glScaled(0.9, 0.8, 0.9);
+
+	// cube
+	glutSolidCube(CABIN_SIZE);
+
+	glPopMatrix();
+}
 
 /******************************************************************************/
