@@ -273,11 +273,15 @@ float rotorAngle = 1.0f;
 
 // boat
 // base
-#define BASE_SIZE 5.0f
-#define CABIN_SIZE 2.0f
+#define BOAT_BASE_SIZE 5.0f
+#define BOAT_CABIN_SIZE 2.0f
 
-//dock
-#define PLANK_SIZE 12.5F
+// dock
+#define DOCK_PLANK_SIZE 12.5f
+// lamp
+#define LAMP_POST_SIZE 6.0f
+#define LAMP_CONNECTOR_SIZE 1.0f
+#define LAMP_BULB_SIZE 0.25f
 
 #define PI 3.1415f
 
@@ -295,6 +299,8 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 const GLfloat WHITE[3] = { 1.0f, 1.0f, 1.0f };
 const GLfloat RED[3] = { 1.0f, 0.0f, 0.0f };
 const GLfloat BLUE[3] = { 0.0f, 0.0f, 1.0f };
+const GLfloat YELLOW[3] = { 1.0f, 1.0f, 0.0f };
+
 
 //model animation variables (position, heading, speed (metres per second)) for the helicopter
 float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
@@ -1369,7 +1375,7 @@ void drawBoatBase(void)
 	glScaled(0.4, 0.5, 0.7);
 
 	// cube
-	glutSolidCube(BASE_SIZE);
+	glutSolidCube(BOAT_BASE_SIZE);
 
 
 	// draw cabin
@@ -1391,7 +1397,7 @@ void drawBoatCabin(void)
 	glScaled(0.9, 0.8, 0.9);
 
 	// cube
-	glutSolidCube(CABIN_SIZE);
+	glutSolidCube(BOAT_CABIN_SIZE);
 
 	glPopMatrix();
 }
@@ -1420,7 +1426,7 @@ void drawPlank(int num)
 	glPushMatrix();
 
 	// translate to side 
-	glTranslated(PLANK_SIZE * num * 0.055, 0.0, 0.0);
+	glTranslated(DOCK_PLANK_SIZE * num * 0.055, 0.0, 0.0);
 
 	// rotate about the x so it is is horizontal
 	glRotated(90, 1.0, 0.0, 0.0);
@@ -1429,19 +1435,55 @@ void drawPlank(int num)
 	glScaled(0.05, 1.0, 0.05);
 
 	// cube
-	glutSolidCube(PLANK_SIZE);
+	glutSolidCube(DOCK_PLANK_SIZE);
 
 	glPopMatrix();
 }
 
-void drawLamp(void)
+void drawLamp()
 {
-	glColor3fv(BATMAN_GREY);
+	glPushMatrix();
+
+	// translate to the top of the dock
+	glTranslated(0.0, 1.0, 0.0);
+
+	// draw the street light post
+	glColor3fv(PALE_GREEN);
+	glScaled(0.05, 1.0, 0.05);
+	glutSolidCube(LAMP_POST_SIZE);
+
+	glPopMatrix();
 
 	glPushMatrix();
 
+	// translate to the top of the street light post
+	glTranslated(LAMP_CONNECTOR_SIZE / 4, LAMP_POST_SIZE * 0.7, 0.0);
 
+	// draw the street light lamp
+	glColor3fv(BLUE);
+	// rotate about the x so it is is horizontal
+	glRotated(90, 1.0, 0.0, 0.0);
+	glScaled(1.0, 0.3, 0.3);
+	glutSolidCube(LAMP_CONNECTOR_SIZE);
+
+	glPopMatrix();
+
+	glPushMatrix();
+
+	// translate to the top of the street light lamp
+	glTranslated(LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, 0.0);
+
+	// draw the light bulb
+	glColor3fv(YELLOW);
+	glutSolidSphere(LAMP_BULB_SIZE, 50, 50);
 
 	glPopMatrix();
 }
+
+
+
+
+
+
+
 /******************************************************************************/
