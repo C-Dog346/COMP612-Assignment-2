@@ -169,6 +169,10 @@ void drawBoatCabin(void);
 // move boat
 void moveBoat(void);
 
+// dock
+void drawDock(void);
+void drawLamp(void);
+
 // camera
 void updateCameraPos(void);
 
@@ -270,6 +274,9 @@ float rotorAngle = 1.0f;
 // base
 #define BASE_SIZE 5.0f
 #define CABIN_SIZE 2.0f
+
+//dock
+#define PLANK_SIZE 15.0F
 
 #define PI 3.1415f
 
@@ -377,6 +384,9 @@ void display(void)
 
 	// draw the boat
 	drawBoat();
+
+	// draw the dock and lamp();
+	drawDock();
 
 	// swap the drawing buffers
 	glutSwapBuffers();
@@ -1337,6 +1347,8 @@ void drawBoat(void)
 
 	// translate boat
 	glTranslated(boatLocation[0], boatLocation[1], boatLocation[2]);
+
+	// rotate on the y
 	glRotated(boatFacing, 0.0, 1.0, 0.0);
 
 	// draw base
@@ -1349,6 +1361,8 @@ void drawBoat(void)
 void drawBoatBase(void)
 {
 	glColor3fv(BLUE);
+
+	glPushMatrix();
 
 	// scale base cube
 	glScaled(0.4, 0.5, 0.7);
@@ -1367,6 +1381,8 @@ void drawBoatCabin(void)
 {
 	glColor3fv(RED);
 
+	glPushMatrix();
+
 	// translate upwards
 	glTranslated(0.0, 3.0, 0.5);
 
@@ -1375,6 +1391,37 @@ void drawBoatCabin(void)
 
 	// cube
 	glutSolidCube(CABIN_SIZE);
+
+	glPopMatrix();
+}
+
+void drawDock(void)
+{
+	glColor3fv(RED);
+
+	glPushMatrix();
+
+	// translate upwards
+	glTranslated(0.0, 0.1, GRID_SIZE / 2 * 0.6);
+
+	glRotated(boatFacing, 0.0, -1.0, 0.0);
+
+	// scale the cube 
+	glScaled(0.2, 1.0, 0.2);
+
+	// cube
+	glutSolidCube(PLANK_SIZE);
+
+	drawLamp();
+
+	glPopMatrix();
+}
+
+void drawLamp(void)
+{
+	glColor3fv(RED);
+
+	glPushMatrix();
 
 	glPopMatrix();
 }
