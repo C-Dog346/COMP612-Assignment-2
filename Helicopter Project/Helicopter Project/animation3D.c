@@ -302,15 +302,18 @@ const GLfloat BLUE[3] = { 0.0f, 0.0f, 1.0f };
 const GLfloat YELLOW[3] = { 1.0f, 1.0f, 0.0f };
 
 
-//model animation variables (position, heading, speed (metres per second)) for the helicopter
+// model animation variables (position, heading, speed (metres per second)) for the helicopter
 float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float helicopterMoveSpeed = 10.0f;
 
-//model animation variables (position, heading, speed (metres per second)) for the boat
+// model animation variables (position, heading, speed (metres per second)) for the boat
 float boatLocation[] = { GRID_SIZE / 2 * 0.7, -0.25f, GRID_SIZE / 2 * 0.8 };
 float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
+
+// lamp
+GLfloat lampLightPosition[] = { LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.6, 1.0 };
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -804,6 +807,7 @@ void think(void)
 	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - BODY_RADIUS, helicopterLocation[2], 1.0f };
 
 	glLightfv(GL_LIGHT1, GL_POSITION, spotLightPosition);
+	glLightfv(GL_LIGHT2, GL_POSITION, lampLightPosition);
 
 	// I didn't like the idea of this number getting stupidly huge so I wanted to reset it to avoid bugs
 	if (rotorAngle > 360.0f)
@@ -840,6 +844,12 @@ void initLights(void)
 	float spotLightExponent = 5.0f;
 	float spotLightCutoff = 60.0f;
 
+	float lampLightExponent = 3.0f;
+	float lampLightCutoff = 50.0f;
+
+	
+	
+
 	// Configure global ambient lighting.
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
 
@@ -859,11 +869,21 @@ void initLights(void)
 	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, spotLightExponent);
 	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, spotLightCutoff);
 
+	// Configure Light 2 (dock lamp).
+	glLightfv(GL_LIGHT2, GL_POSITION, lightPosition);
+	glLightfv(GL_LIGHT2, GL_AMBIENT, ambientLight);
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, spotLight);
+	glLightfv(GL_LIGHT2, GL_SPECULAR, specularLight);
+
+	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, down);
+	glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, lampLightExponent);
+	glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, lampLightCutoff);
 
 	// Enable lighting
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);
 
 	// Make GL normalize the normal vectors we supply.
 	glEnable(GL_NORMALIZE);
