@@ -155,7 +155,7 @@ void borderCollision(void);
 void drawHelipad(void);
 
 // hierarchical model functions to position and scale parts for helicopter
-void drawHelicopter();
+void drawHelicopter(void);
 void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
 void drawSkidEnding(enum Side xSide, enum Side zSide);
@@ -305,6 +305,7 @@ float rotorAngle = 1.0f;
 // initial y value for the helicopter centre 
 #define START_HEIGHT HELICOPTER_BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
 
+// colours
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
 const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
@@ -314,7 +315,7 @@ const GLfloat WHITE[3] = { 1.0f, 1.0f, 1.0f };
 const GLfloat RED[3] = { 1.0f, 0.0f, 0.0f };
 const GLfloat BLUE[3] = { 0.0f, 0.0f, 1.0f };
 const GLfloat YELLOW[3] = { 1.0f, 1.0f, 0.0f };
-
+const GLfloat BLACK[3] = { 0.0f, 0.0f, 0.0f };
 
 // model animation variables (position, heading, speed (metres per second)) for the helicopter
 float helicopterLocation[] = { GRID_SIZE / 2 * 0.5, START_HEIGHT, -GRID_SIZE / 2 * 0.5 }; // X, Y, Z
@@ -1112,7 +1113,7 @@ void drawGrid(void)
 {
 	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	glColor3fv(WHITE); //pale green -- better to have a const
+	glColor3fv(WHITE);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -1196,24 +1197,71 @@ void drawSkyBorder(void)
 
 void drawHelipad(void)
 {
-	//renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	//glColor3fv(WHITE); //pale green -- better to have a const
+	glColor3fv(WHITE);
 
-	//glBegin(GL_QUADS);
-	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	//glVertex3f(x, 0.0f, z);
-	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	//glVertex3f(x, 0.0f, z + GRID_SQUARE_SIZE);
-	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	//glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z + GRID_SQUARE_SIZE);
-	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	//glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z);
-	//glEnd();
+	// base
+	glBegin(GL_QUADS);
+
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+
+	glEnd();
+
+	glColor3fv(BLACK);
+
+	// "left" vert line
+	glBegin(GL_QUADS);
+
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+
+	glEnd();
+
+	// horizontal line
+	glBegin(GL_QUADS);
+
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+
+	glEnd();
+	
+	// "right" vert line
+	glBegin(GL_QUADS);
+
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+
+	glEnd();
 
 }
 
-void drawHelicopter()
+void drawHelicopter(void)
 {
 	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
 
@@ -1536,7 +1584,7 @@ void drawPlank(int num)
 	glPopMatrix();
 }
 
-void drawLamp()
+void drawLamp(void)
 {
 	glPushMatrix();
 
