@@ -182,7 +182,8 @@ void updateCameraPos(void);
 void setupSpotlight(void);
 
 // border
-void makeBorder(void);
+void drawSkyBorder(void);
+void borderCollision(void);
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -312,12 +313,12 @@ const GLfloat YELLOW[3] = { 1.0f, 1.0f, 0.0f };
 
 
 // model animation variables (position, heading, speed (metres per second)) for the helicopter
-float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
+float helicopterLocation[] = { GRID_SIZE / 2 * 0.5, START_HEIGHT, -GRID_SIZE / 2 * 0.5 }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float helicopterMoveSpeed = 10.0f;
 
 // model animation variables (position, heading, speed (metres per second)) for the boat
-float boatLocation[] = { GRID_SIZE / 2 * 0.7, -0.25f, GRID_SIZE / 2 * 0.8 };
+float boatLocation[] = { GRID_SIZE / 2 * 0.4, -0.25f, GRID_SIZE / 2 * 0.4 };
 float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
 
@@ -399,6 +400,9 @@ void display(void)
 	// draw the ground
 	drawGrid();
 
+	// draw the border
+	drawSkyBorder();
+
 	// draw helicopter
 	drawHelicopter();
 
@@ -407,8 +411,6 @@ void display(void)
 
 	// draw the dock and lamp();
 	drawDock();
-
-	makeBorder();
 
 	// swap the drawing buffers
 	glutSwapBuffers();
@@ -832,6 +834,9 @@ void think(void)
 
 	moveBoat();
 
+	// make sure that the helicopter does not leave the world border
+	//borderCollision();
+
 	// update the camera position to follow the helicopter
 	updateCameraPos();
 }
@@ -1047,7 +1052,7 @@ PPMImage loadPPM(char* filename) // loads a PPM image
 	return image;
 }
 
-void makeBorder(void)
+void borderCollision(void)
 {
 	// calculate heli distance form origin
 	float distance = sqrtf(helicopterLocation[0] * helicopterLocation[0] + helicopterLocation[2] * helicopterLocation[2]);
@@ -1109,7 +1114,7 @@ void drawGrid(void)
 
 	float origin = -GRID_SIZE / 2.0f;
 
-	for (float z = origin; z < (GRID_SIZE / 2.0f) * 0.5f; z += GRID_SQUARE_SIZE)
+	for (float z = origin; z < (GRID_SIZE / 2.0f) * 0.15f; z += GRID_SQUARE_SIZE)
 	{
 		for (float x = origin; x < GRID_SIZE / 2.0f; x += GRID_SQUARE_SIZE)
 		{
@@ -1134,8 +1139,6 @@ void drawGrid(void)
 
 	// Specify the texture image
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water.width, water.height, 0, GL_RGB, GL_UNSIGNED_BYTE, water.data);
-
-	origin = -GRID_SIZE / 2.0f;
 
 	for (float z = origin; z < GRID_SIZE / 2.0f; z += GRID_SQUARE_SIZE)
 	{
@@ -1162,6 +1165,24 @@ void drawGrid(void)
 	glDeleteTextures(1, &waterId);
 }
 
+void drawSkyBorder(void)
+{
+	// calculate heli distance form origin
+
+	glColor3fv(BATMAN_GREY);
+
+	glPushMatrix();
+
+	// move upwards
+	glTranslated(0.0, SKY_HEIGHT, 0.0);
+
+	// rotate to verticle
+	glRotated(90, 1.0, 0.0, 0.0);
+
+	gluCylinder(cylinderQuadric, WORLD_RADIUS, WORLD_RADIUS, SKY_HEIGHT, 50, 50);
+
+	glPopMatrix();
+}
 
 void drawHelicopter()
 {
