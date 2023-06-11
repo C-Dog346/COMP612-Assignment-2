@@ -907,9 +907,10 @@ void initLights(void)
 	glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, lampLightExponent);
 	glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, lampLightCutoff);
 
-	// Enable lighting (GL_LIGHT1 is based on a key toggle)
+	// Enable lighting (GL_LIGHT1 can be toggled with the 't' key)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 	glEnable(GL_LIGHT2);	
 
 	// Make GL normalize the normal vectors we supply.
