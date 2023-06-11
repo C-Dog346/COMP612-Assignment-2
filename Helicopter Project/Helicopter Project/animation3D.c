@@ -325,6 +325,7 @@ const GLfloat brownDiffuse[4] = { 0.545f, 0.27f, 0.0745f, 1.0f };
 const GLfloat policeBlueDiffuse[4] = { 0.0f, 0.0f, 0.40f, 1.0f };
 const GLfloat lightCyanDiffuse[4] = { 0.58f, 1.0f, 1.0f, 1.0f };
 const GLfloat whiteDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat redDiffuse[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
 const GLfloat blueDiffuse[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
 const GLfloat yellowDiffuse[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 const GLfloat blackDiffuse[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -728,7 +729,7 @@ void init(void)
 	initLights();
 	
 	//Enable use of fog
-	glEnable(GL_FOG);
+	//glEnable(GL_FOG);
 
 	// define the color and density of the fog
 	GLfloat fogColor[4] = { 0.2f, 0.2f, 0.2f, 0.2f };
@@ -888,6 +889,7 @@ void initLights(void)
 
 	// Set up light parameters
 	GLfloat spotLight[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat lampLight[] = { 1.0, 1.0, 1.0, 1.0 };
 
 	float spotLightExponent = 5.0f;
 	float spotLightCutoff = 60.0f;
@@ -917,7 +919,7 @@ void initLights(void)
 	// Configure Light 2 (dock lamp).
 	glLightfv(GL_LIGHT2, GL_POSITION, lightPosition);
 	glLightfv(GL_LIGHT2, GL_AMBIENT, ambientLight);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, spotLight);
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, lampLight);
 	glLightfv(GL_LIGHT2, GL_SPECULAR, specularLight);
 
 	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, down);
@@ -1202,6 +1204,9 @@ void drawSkyBorder(void)
 	// calculate heli distance form origin
 
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,greyDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1220,7 +1225,10 @@ void drawHelipad(void)
 {
 	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,WHITE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,whiteDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	// base
 	glBegin(GL_QUADS);
@@ -1236,7 +1244,10 @@ void drawHelipad(void)
 
 	glEnd();
 
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,BLACK);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,blackDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	// "left" vert line
 	glBegin(GL_QUADS);
@@ -1292,7 +1303,10 @@ void drawHelicopter(void)
 	// rotate helicopter
 	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,POLICE_BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,policeBlueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, highShininess);
 	gluSphere(sphereQuadric, HELICOPTER_BODY_RADIUS, 50, 50);
 
 	// front windshield
@@ -1319,7 +1333,10 @@ void drawWindshield(void)
 {
 	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
 
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,LIGHT_CYAN);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,lightCyanDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1349,6 +1366,9 @@ void drawSkidConnector(enum Side side)
 	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
 
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1372,6 +1392,9 @@ void drawSkid(enum Side side)
 	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
 
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1445,7 +1468,10 @@ void drawTail(void)
 {
 	glPushMatrix();
 
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,POLICE_BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,policeBlueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	// rotate to the back
 	glRotated(180, 1.0, 0.0, 0.0);
@@ -1469,6 +1495,9 @@ void drawTail(void)
 void drawTailRotors(void)
 {
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1515,7 +1544,10 @@ void drawBoat(void)
 
 void drawBoatBase(void)
 {
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,blueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1534,7 +1566,10 @@ void drawBoatBase(void)
 
 void drawBoatCabin(void)
 {
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,RED);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,redDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1553,6 +1588,9 @@ void drawBoatCabin(void)
 void drawDock(void)
 {
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1590,6 +1628,7 @@ void drawPlank(int num)
 
 void drawLamp(void)
 {
+	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
 	glPushMatrix();
 
 	// translate to the top of the dock
@@ -1597,6 +1636,9 @@ void drawLamp(void)
 
 	// draw the street light post
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,paleGreenDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	glScaled(0.05, 1.0, 0.05);
 	glutSolidCube(LAMP_POST_SIZE);
 
@@ -1608,7 +1650,10 @@ void drawLamp(void)
 	glTranslated(LAMP_CONNECTOR_SIZE / 4, LAMP_POST_SIZE * 0.7, 0.0);
 
 	// draw the street light lamp
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,blueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	// rotate about the x so it is is horizontal
 	glRotated(90, 1.0, 0.0, 0.0);
 	glScaled(1.0, 0.3, 0.3);
@@ -1622,16 +1667,12 @@ void drawLamp(void)
 	glTranslated(LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, 0.0);
 
 	// draw the light bulb
-	glMaterialfv(GL_FRONT, GL_DIFFUSE,YELLOW);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,yellowDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	glutSolidSphere(LAMP_BULB_SIZE, 50, 50);
 
 	glPopMatrix();
 }
-
-
-
-
-
-
-
 /******************************************************************************/
