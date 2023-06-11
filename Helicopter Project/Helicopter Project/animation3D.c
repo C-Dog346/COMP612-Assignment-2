@@ -1221,13 +1221,13 @@ void drawHelipad(void)
 	glBegin(GL_QUADS);
 
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.55, 0.11f, -GRID_SIZE / 2 * 0.55);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.55);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.45);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.55, 0.11f, -GRID_SIZE / 2 * 0.45);
 
 	glEnd();
 
@@ -1235,13 +1235,13 @@ void drawHelipad(void)
 	glBegin(GL_QUADS);
 
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.51);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.51);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.49);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.49);
 
 	glEnd();
 	
@@ -1249,13 +1249,13 @@ void drawHelipad(void)
 	glBegin(GL_QUADS);
 
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.55);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.45, 0.11f, -GRID_SIZE / 2 * 0.55);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.45, 0.11f, -GRID_SIZE / 2 * 0.45);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.45);
 
 	glEnd();
 
