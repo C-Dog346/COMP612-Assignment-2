@@ -147,6 +147,12 @@ void initLights(void);
 void drawOrigin(void);
 void drawGrid(void);
 
+// border
+void drawSkyBorder(void);
+void borderCollision(void);
+
+// helipad
+void drawHelipad(void);
 
 // hierarchical model functions to position and scale parts for helicopter
 void drawHelicopter();
@@ -180,6 +186,8 @@ void updateCameraPos(void);
 
 // spotlight
 void setupSpotlight(void);
+
+
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -233,19 +241,23 @@ GLuint grassId;
 float rotorSpeed = 750.0f;
 float rotorAngle = 1.0f;
 
+// border values
+#define WORLD_RADIUS 50.0f
+#define SKY_HEIGHT 70.0f
+
 // hierachical model setup values
 
 // helicopter
 // body
-#define BODY_RADIUS 2.0f
+#define HELICOPTER_BODY_RADIUS 2.0f
 
 // skid connectors
-#define SKID_CONNECTOR_RADIUS BODY_RADIUS / 10.0f
-#define SKID_CONNECTOR_LENGTH BODY_RADIUS * 0.8f
+#define SKID_CONNECTOR_RADIUS HELICOPTER_BODY_RADIUS / 10.0f
+#define SKID_CONNECTOR_LENGTH HELICOPTER_BODY_RADIUS * 0.8f
 
 // skids
-#define SKID_RADIUS BODY_RADIUS / 10.0f
-#define SKID_LENGTH BODY_RADIUS * 3.0f
+#define SKID_RADIUS HELICOPTER_BODY_RADIUS / 10.0f
+#define SKID_LENGTH HELICOPTER_BODY_RADIUS * 3.0f
 
 // skid endings
 #define SKID_ENDING_RADIUS SKID_RADIUS
@@ -261,13 +273,13 @@ float rotorAngle = 1.0f;
 // top rotors
 #define ROTOR_CUBE_SIZE 0.8f
 #define ROTOR_BLADE_SIZE 10.0f
-#define NUMBER_OF_BLADES 4
+#define ROTOR_NUMBER_OF_BLADES 4
 
 // tail
 #define TAIL_BASE 1.0f
 #define TAIL_LENGTH 6.5f
 #define TAIL_TIP_RADIUS 0.25f
-#define TAIL_ROTORS_SCALE_FACTOR 0.25f
+#define TAIL_ROTOR_SCALE_FACTOR 0.25f
 
 // grid
 #define GRID_SQUARE_SIZE 1.0f
@@ -291,7 +303,7 @@ float rotorAngle = 1.0f;
 #define CAMERA_DISTANCE 15.0f
 
 // initial y value for the helicopter centre 
-#define START_HEIGHT BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
+#define START_HEIGHT HELICOPTER_BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
 
 const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
 const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
@@ -305,12 +317,12 @@ const GLfloat YELLOW[3] = { 1.0f, 1.0f, 0.0f };
 
 
 // model animation variables (position, heading, speed (metres per second)) for the helicopter
-float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
+float helicopterLocation[] = { GRID_SIZE / 2 * 0.5, START_HEIGHT, -GRID_SIZE / 2 * 0.5 }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float helicopterMoveSpeed = 10.0f;
 
 // model animation variables (position, heading, speed (metres per second)) for the boat
-float boatLocation[] = { GRID_SIZE / 2 * 0.7, -0.25f, GRID_SIZE / 2 * 0.8 };
+float boatLocation[] = { GRID_SIZE / 2 * 0.4, -0.25f, GRID_SIZE / 2 * 0.4 };
 float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
 
@@ -391,6 +403,12 @@ void display(void)
 
 	// draw the ground
 	drawGrid();
+
+	// draw the border
+	drawSkyBorder();
+
+	// draw helipad
+	drawHelipad();
 
 	// draw helicopter
 	drawHelicopter();
@@ -799,8 +817,12 @@ void think(void)
 		if (keyboardMotion.Heave != MOTION_NONE) {
 			/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
 			// stops the helicopter from moving below the grid
-			if (helicopterLocation[1] > START_HEIGHT)
-				helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
+			if (helicopterLocation[1] > START_HEIGHT) {
+				if (helicopterLocation[1] < SKY_HEIGHT)
+					helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
+				else if (keyboardMotion.Heave < 0)
+					helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
+			}
 			else if (keyboardMotion.Heave > 0)
 				helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
 		}
@@ -809,7 +831,7 @@ void think(void)
 		rotorSpeed += ROTOR_ACCELRATION * FRAME_TIME_SEC;
 	}
 
-	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - BODY_RADIUS, helicopterLocation[2], 1.0f };
+	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - HELICOPTER_BODY_RADIUS, helicopterLocation[2], 1.0f };
 	glLightfv(GL_LIGHT1, GL_POSITION, spotLightPosition);
 	glLightfv(GL_LIGHT2, GL_POSITION, lampLightPosition);
 	
@@ -822,6 +844,9 @@ void think(void)
 	rotorAngle += rotorSpeed * FRAME_TIME_SEC;
 
 	moveBoat();
+
+	// make sure that the helicopter does not leave the world border
+	borderCollision();
 
 	// update the camera position to follow the helicopter
 	updateCameraPos();
@@ -1038,6 +1063,21 @@ PPMImage loadPPM(char* filename) // loads a PPM image
 	return image;
 }
 
+void borderCollision(void)
+{
+	float border = WORLD_RADIUS - HELICOPTER_BODY_RADIUS - TAIL_LENGTH;
+	// distance of the helicopter from the origin
+	float distance = sqrtf(helicopterLocation[0] * helicopterLocation[0] + helicopterLocation[2] * helicopterLocation[2]);
+
+	if (distance >= border) {
+		
+		// calculate the new helicopter location
+		float angle = atan2f(helicopterLocation[2], helicopterLocation[0]);
+		helicopterLocation[0] = border * cosf(angle);
+		helicopterLocation[2] = border * sinf(angle);
+	}
+}
+
 void drawOrigin(void)
 {
 	glColor3f(0.0f, 1.0f, 1.0f);
@@ -1084,7 +1124,7 @@ void drawGrid(void)
 
 	float origin = -GRID_SIZE / 2.0f;
 
-	for (float z = origin; z < (GRID_SIZE / 2.0f) * 0.5f; z += GRID_SQUARE_SIZE)
+	for (float z = origin; z < (GRID_SIZE / 2.0f) * 0.15f; z += GRID_SQUARE_SIZE)
 	{
 		for (float x = origin; x < GRID_SIZE / 2.0f; x += GRID_SQUARE_SIZE)
 		{
@@ -1109,8 +1149,6 @@ void drawGrid(void)
 
 	// Specify the texture image
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water.width, water.height, 0, GL_RGB, GL_UNSIGNED_BYTE, water.data);
-
-	origin = -GRID_SIZE / 2.0f;
 
 	for (float z = origin; z < GRID_SIZE / 2.0f; z += GRID_SQUARE_SIZE)
 	{
@@ -1137,6 +1175,43 @@ void drawGrid(void)
 	glDeleteTextures(1, &waterId);
 }
 
+void drawSkyBorder(void)
+{
+	// calculate heli distance form origin
+
+	glColor3fv(BATMAN_GREY);
+
+	glPushMatrix();
+
+	// move upwards
+	glTranslated(0.0, SKY_HEIGHT * 1.5, 0.0);
+
+	// rotate to verticle
+	glRotated(90, 1.0, 0.0, 0.0);
+
+	gluCylinder(cylinderQuadric, WORLD_RADIUS, WORLD_RADIUS, SKY_HEIGHT * 1.5, 50, 50);
+
+	glPopMatrix();
+}
+
+void drawHelipad(void)
+{
+	//renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	//glColor3fv(WHITE); //pale green -- better to have a const
+
+	//glBegin(GL_QUADS);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x, 0.0f, z);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x, 0.0f, z + GRID_SQUARE_SIZE);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z + GRID_SQUARE_SIZE);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z);
+	//glEnd();
+
+}
 
 void drawHelicopter()
 {
@@ -1150,7 +1225,7 @@ void drawHelicopter()
 	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 
 	glColor3fv(POLICE_BLUE);
-	gluSphere(sphereQuadric, BODY_RADIUS, 50, 50);
+	gluSphere(sphereQuadric, HELICOPTER_BODY_RADIUS, 50, 50);
 
 	// front windshield
 	drawWindshield();
@@ -1213,10 +1288,10 @@ void drawSkidConnector(enum Side side)
 	glPushMatrix();
 
 	// move to the left or right, into position 
-	glTranslated(-BODY_RADIUS / 2 * side, 0, 0);
+	glTranslated(-HELICOPTER_BODY_RADIUS / 2 * side, 0, 0);
 
 	// move down and to the side
-	glTranslated(BODY_RADIUS * side, -BODY_RADIUS * 0.75, 0.0);
+	glTranslated(HELICOPTER_BODY_RADIUS * side, -HELICOPTER_BODY_RADIUS * 0.75, 0.0);
 
 	// rotate to verticle
 	glRotated(90, 1.0, 0.0, 0.0);
@@ -1236,7 +1311,7 @@ void drawSkid(enum Side side)
 	glPushMatrix();
 
 	// move to correct position for middle of skid
-	glTranslated(-BODY_RADIUS / 2 * side, -BODY_RADIUS * 1.5, -BODY_RADIUS * 1.5);
+	glTranslated(-HELICOPTER_BODY_RADIUS / 2 * side, -HELICOPTER_BODY_RADIUS * 1.5, -HELICOPTER_BODY_RADIUS * 1.5);
 
 	// skid
 	gluCylinder(cylinderQuadric, SKID_RADIUS, SKID_RADIUS, SKID_LENGTH, 50, 50);
@@ -1278,10 +1353,10 @@ void drawTopRotors(void)
 	glPushMatrix();
 
 	// stay or move to the front
-	glTranslated(0.0, BODY_RADIUS + 0.2, 0.0);
+	glTranslated(0.0, HELICOPTER_BODY_RADIUS + 0.2, 0.0);
 
 	// blades
-	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
+	for (int i = 1; i < ROTOR_NUMBER_OF_BLADES + 1; i++)
 	{
 		drawBlade(i);
 	}
@@ -1303,7 +1378,7 @@ void drawBlade(int num)
 	glTranslated(0.0, ROTOR_CUBE_SIZE / 2 - 0.2, 0.0);
 
 	// rotate based on which blade
-	glRotated(360 / NUMBER_OF_BLADES * num + rotorAngle, 0.0, 1.0, 0.0);
+	glRotated(360 / ROTOR_NUMBER_OF_BLADES * num + rotorAngle, 0.0, 1.0, 0.0);
 
 	// flatten cube to make it look like a blade
 	glScaled(1.0, 0.02, 0.05);
@@ -1352,10 +1427,10 @@ void drawTailRotors(void)
 	glTranslated(0.0, TAIL_TIP_RADIUS * 1.35, 0.0);
 
 	// scale the rotor
-	glScaled(1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR, 1.0 * TAIL_ROTORS_SCALE_FACTOR);
+	glScaled(1.0 * TAIL_ROTOR_SCALE_FACTOR, 1.0 * TAIL_ROTOR_SCALE_FACTOR, 1.0 * TAIL_ROTOR_SCALE_FACTOR);
 
 	// blades
-	for (int i = 1; i < NUMBER_OF_BLADES + 1; i++)
+	for (int i = 1; i < ROTOR_NUMBER_OF_BLADES + 1; i++)
 	{
 		drawBlade(i);
 	}
