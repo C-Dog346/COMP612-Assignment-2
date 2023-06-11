@@ -113,6 +113,7 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 #define DEBUG_CAMERA_TOP				'3'
 #define DEBUG_CAMERA_LOW				'4'
 #define DEBUG_CAMERA_DEFAULT_ZOOM_OUT	'5'
+#define SPOTLIGHT_TOGGLE				't'
 
 // Define all GLUT special keys used for input (add any new key definitions here).
 
@@ -196,7 +197,8 @@ enum Side {
 };
 
 // down
-const float down[] = { 0.0f, -1.0f, -1.0f };
+const float downForward[] = { 0.0f, -1.0f, -1.0f };
+const float down[] = { 0.0f, -1.0f, 0.0f };
 
 // window dimensions
 GLint windowWidth = 800;
@@ -313,7 +315,8 @@ float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
 
 // lamp
-GLfloat lampLightPosition[] = { LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.6, 1.0 };
+GLfloat lampLightPosition[] = { 0.0, 4.0, 0.0, 1.0 };
+//{ LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.6, 1.0 };
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -508,6 +511,8 @@ void keyPressed(unsigned char key, int x, int y)
 		cameraOffset[1] = 5.0f;
 		cameraOffset[2] = 5.0f;
 		break;
+	case SPOTLIGHT_TOGGLE:
+		glIsEnabled(GL_LIGHT1) ? glDisable(GL_LIGHT1) : glEnable(GL_LIGHT1);
 	}
 }
 
@@ -685,7 +690,7 @@ void init(void)
 
 	// Anything that relies on lighting or specifies normals must be initialised after initLights.
 	initLights();
-
+	
 	//Enable use of fog
 	glEnable(GL_FOG);
 
@@ -805,9 +810,9 @@ void think(void)
 	}
 
 	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - BODY_RADIUS, helicopterLocation[2], 1.0f };
-
 	glLightfv(GL_LIGHT1, GL_POSITION, spotLightPosition);
 	glLightfv(GL_LIGHT2, GL_POSITION, lampLightPosition);
+	
 
 	// I didn't like the idea of this number getting stupidly huge so I wanted to reset it to avoid bugs
 	if (rotorAngle > 360.0f)
@@ -844,11 +849,8 @@ void initLights(void)
 	float spotLightExponent = 5.0f;
 	float spotLightCutoff = 60.0f;
 
-	float lampLightExponent = 3.0f;
-	float lampLightCutoff = 50.0f;
-
-	
-	
+	float lampLightExponent = 5.0f;
+	float lampLightCutoff = 20.0f;
 
 	// Configure global ambient lighting.
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
@@ -865,7 +867,7 @@ void initLights(void)
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, spotLight);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, specularLight);
 
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, down);
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, downForward);
 	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, spotLightExponent);
 	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, spotLightCutoff);
 
@@ -879,11 +881,10 @@ void initLights(void)
 	glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, lampLightExponent);
 	glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, lampLightCutoff);
 
-	// Enable lighting
+	// Enable lighting (GL_LIGHT1 is based on a key toggle)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
+	glEnable(GL_LIGHT2);	
 
 	// Make GL normalize the normal vectors we supply.
 	glEnable(GL_NORMALIZE);
