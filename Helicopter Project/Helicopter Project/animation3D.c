@@ -113,6 +113,7 @@ motionstate4_t keyboardMotion = { MOTION_NONE, MOTION_NONE, MOTION_NONE, MOTION_
 #define DEBUG_CAMERA_TOP				'3'
 #define DEBUG_CAMERA_LOW				'4'
 #define DEBUG_CAMERA_DEFAULT_ZOOM_OUT	'5'
+#define SPOTLIGHT_TOGGLE				't'
 
 // Define all GLUT special keys used for input (add any new key definitions here).
 
@@ -169,6 +170,11 @@ void drawBoatCabin(void);
 // move boat
 void moveBoat(void);
 
+// dock
+void drawDock(void);
+void drawPlank(int num);
+void drawLamp(void);
+
 // camera
 void updateCameraPos(void);
 
@@ -191,7 +197,8 @@ enum Side {
 };
 
 // down
-const float down[] = { 0.0f, -1.0f, -1.0f };
+const float downForward[] = { 0.0f, -1.0f, -1.0f };
+const float down[] = { 0.0f, -1.0f, 0.0f };
 
 // window dimensions
 GLint windowWidth = 800;
@@ -268,8 +275,15 @@ float rotorAngle = 1.0f;
 
 // boat
 // base
-#define BASE_SIZE 5.0f
-#define CABIN_SIZE 2.0f
+#define BOAT_BASE_SIZE 5.0f
+#define BOAT_CABIN_SIZE 2.0f
+
+// dock
+#define DOCK_PLANK_SIZE 12.5f
+// lamp
+#define LAMP_POST_SIZE 6.0f
+#define LAMP_CONNECTOR_SIZE 1.0f
+#define LAMP_BULB_SIZE 0.25f
 
 #define PI 3.1415f
 
@@ -287,16 +301,22 @@ const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
 const GLfloat WHITE[3] = { 1.0f, 1.0f, 1.0f };
 const GLfloat RED[3] = { 1.0f, 0.0f, 0.0f };
 const GLfloat BLUE[3] = { 0.0f, 0.0f, 1.0f };
+const GLfloat YELLOW[3] = { 1.0f, 1.0f, 0.0f };
 
-//model animation variables (position, heading, speed (metres per second)) for the helicopter
+
+// model animation variables (position, heading, speed (metres per second)) for the helicopter
 float helicopterLocation[] = { 0.0f, START_HEIGHT, 0.0f }; // X, Y, Z
 float helicopterFacing = 0.0f;
 const float helicopterMoveSpeed = 10.0f;
 
-//model animation variables (position, heading, speed (metres per second)) for the boat
+// model animation variables (position, heading, speed (metres per second)) for the boat
 float boatLocation[] = { GRID_SIZE / 2 * 0.7, -0.25f, GRID_SIZE / 2 * 0.8 };
 float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
+
+// lamp
+GLfloat lampLightPosition[] = { 0.0, 4.0, 0.0, 1.0 };
+//{ LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.6, 1.0 };
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -377,6 +397,9 @@ void display(void)
 
 	// draw the boat
 	drawBoat();
+
+	// draw the dock and lamp();
+	drawDock();
 
 	// swap the drawing buffers
 	glutSwapBuffers();
@@ -488,6 +511,8 @@ void keyPressed(unsigned char key, int x, int y)
 		cameraOffset[1] = 5.0f;
 		cameraOffset[2] = 5.0f;
 		break;
+	case SPOTLIGHT_TOGGLE:
+		glIsEnabled(GL_LIGHT1) ? glDisable(GL_LIGHT1) : glEnable(GL_LIGHT1);
 	}
 }
 
@@ -665,7 +690,7 @@ void init(void)
 
 	// Anything that relies on lighting or specifies normals must be initialised after initLights.
 	initLights();
-
+	
 	//Enable use of fog
 	glEnable(GL_FOG);
 
@@ -785,8 +810,9 @@ void think(void)
 	}
 
 	GLfloat spotLightPosition[] = { helicopterLocation[0], helicopterLocation[1] - BODY_RADIUS, helicopterLocation[2], 1.0f };
-
 	glLightfv(GL_LIGHT1, GL_POSITION, spotLightPosition);
+	glLightfv(GL_LIGHT2, GL_POSITION, lampLightPosition);
+	
 
 	// I didn't like the idea of this number getting stupidly huge so I wanted to reset it to avoid bugs
 	if (rotorAngle > 360.0f)
@@ -823,6 +849,9 @@ void initLights(void)
 	float spotLightExponent = 5.0f;
 	float spotLightCutoff = 60.0f;
 
+	float lampLightExponent = 5.0f;
+	float lampLightCutoff = 20.0f;
+
 	// Configure global ambient lighting.
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
 
@@ -838,15 +867,24 @@ void initLights(void)
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, spotLight);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, specularLight);
 
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, down);
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, downForward);
 	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, spotLightExponent);
 	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, spotLightCutoff);
 
+	// Configure Light 2 (dock lamp).
+	glLightfv(GL_LIGHT2, GL_POSITION, lightPosition);
+	glLightfv(GL_LIGHT2, GL_AMBIENT, ambientLight);
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, spotLight);
+	glLightfv(GL_LIGHT2, GL_SPECULAR, specularLight);
 
-	// Enable lighting
+	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, down);
+	glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, lampLightExponent);
+	glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, lampLightCutoff);
+
+	// Enable lighting (GL_LIGHT1 is based on a key toggle)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);	
 
 	// Make GL normalize the normal vectors we supply.
 	glEnable(GL_NORMALIZE);
@@ -1337,6 +1375,8 @@ void drawBoat(void)
 
 	// translate boat
 	glTranslated(boatLocation[0], boatLocation[1], boatLocation[2]);
+
+	// rotate about the y for spin
 	glRotated(boatFacing, 0.0, 1.0, 0.0);
 
 	// draw base
@@ -1350,11 +1390,13 @@ void drawBoatBase(void)
 {
 	glColor3fv(BLUE);
 
+	glPushMatrix();
+
 	// scale base cube
 	glScaled(0.4, 0.5, 0.7);
 
 	// cube
-	glutSolidCube(BASE_SIZE);
+	glutSolidCube(BOAT_BASE_SIZE);
 
 
 	// draw cabin
@@ -1367,6 +1409,8 @@ void drawBoatCabin(void)
 {
 	glColor3fv(RED);
 
+	glPushMatrix();
+
 	// translate upwards
 	glTranslated(0.0, 3.0, 0.5);
 
@@ -1374,9 +1418,93 @@ void drawBoatCabin(void)
 	glScaled(0.9, 0.8, 0.9);
 
 	// cube
-	glutSolidCube(CABIN_SIZE);
+	glutSolidCube(BOAT_CABIN_SIZE);
 
 	glPopMatrix();
 }
+
+void drawDock(void)
+{
+	glColor3fv(BROWN);
+
+	glPushMatrix();
+
+	// translate to side 
+	glTranslated(0.0, -0.1, GRID_SIZE / 2 * 0.6);
+
+	for (int i = 0; i < 8; i++)
+	{
+		drawPlank(i);
+	}
+
+	drawLamp();
+
+	glPopMatrix();
+}
+
+void drawPlank(int num)
+{
+	glPushMatrix();
+
+	// translate to side 
+	glTranslated(DOCK_PLANK_SIZE * num * 0.055, 0.0, 0.0);
+
+	// rotate about the x so it is is horizontal
+	glRotated(90, 1.0, 0.0, 0.0);
+
+	// scale the cube 
+	glScaled(0.05, 1.0, 0.05);
+
+	// cube
+	glutSolidCube(DOCK_PLANK_SIZE);
+
+	glPopMatrix();
+}
+
+void drawLamp()
+{
+	glPushMatrix();
+
+	// translate to the top of the dock
+	glTranslated(0.0, 1.0, 0.0);
+
+	// draw the street light post
+	glColor3fv(PALE_GREEN);
+	glScaled(0.05, 1.0, 0.05);
+	glutSolidCube(LAMP_POST_SIZE);
+
+	glPopMatrix();
+
+	glPushMatrix();
+
+	// translate to the top of the street light post
+	glTranslated(LAMP_CONNECTOR_SIZE / 4, LAMP_POST_SIZE * 0.7, 0.0);
+
+	// draw the street light lamp
+	glColor3fv(BLUE);
+	// rotate about the x so it is is horizontal
+	glRotated(90, 1.0, 0.0, 0.0);
+	glScaled(1.0, 0.3, 0.3);
+	glutSolidCube(LAMP_CONNECTOR_SIZE);
+
+	glPopMatrix();
+
+	glPushMatrix();
+
+	// translate to the top of the street light lamp
+	glTranslated(LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, 0.0);
+
+	// draw the light bulb
+	glColor3fv(YELLOW);
+	glutSolidSphere(LAMP_BULB_SIZE, 50, 50);
+
+	glPopMatrix();
+}
+
+
+
+
+
+
 
 /******************************************************************************/
