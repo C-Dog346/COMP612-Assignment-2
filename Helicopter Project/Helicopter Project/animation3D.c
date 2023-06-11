@@ -147,6 +147,12 @@ void initLights(void);
 void drawOrigin(void);
 void drawGrid(void);
 
+// border
+void drawSkyBorder(void);
+void borderCollision(void);
+
+// helipad
+void drawHelipad(void);
 
 // hierarchical model functions to position and scale parts for helicopter
 void drawHelicopter();
@@ -181,9 +187,7 @@ void updateCameraPos(void);
 // spotlight
 void setupSpotlight(void);
 
-// border
-void drawSkyBorder(void);
-void borderCollision(void);
+
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -402,6 +406,9 @@ void display(void)
 
 	// draw the border
 	drawSkyBorder();
+
+	// draw helipad
+	drawHelipad();
 
 	// draw helicopter
 	drawHelicopter();
@@ -810,8 +817,12 @@ void think(void)
 		if (keyboardMotion.Heave != MOTION_NONE) {
 			/* TEMPLATE: Move your object down if .Heave < 0, or up if .Heave > 0 */
 			// stops the helicopter from moving below the grid
-			if (helicopterLocation[1] > START_HEIGHT)
-				helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
+			if (helicopterLocation[1] > START_HEIGHT) {
+				if (helicopterLocation[1] < SKY_HEIGHT)
+					helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
+				else if (keyboardMotion.Heave < 0)
+					helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
+			}
 			else if (keyboardMotion.Heave > 0)
 				helicopterLocation[1] += keyboardMotion.Heave * helicopterMoveSpeed / 2 * FRAME_TIME_SEC;
 		}
@@ -835,7 +846,7 @@ void think(void)
 	moveBoat();
 
 	// make sure that the helicopter does not leave the world border
-	//borderCollision();
+	borderCollision();
 
 	// update the camera position to follow the helicopter
 	updateCameraPos();
@@ -1054,15 +1065,14 @@ PPMImage loadPPM(char* filename) // loads a PPM image
 
 void borderCollision(void)
 {
-	// calculate heli distance form origin
+	float border = WORLD_RADIUS - HELICOPTER_BODY_RADIUS - TAIL_LENGTH;
+	// distance of the helicopter from the origin
 	float distance = sqrtf(helicopterLocation[0] * helicopterLocation[0] + helicopterLocation[2] * helicopterLocation[2]);
-	float border = WORLD_RADIUS - HELICOPTER_BODY_RADIUS - TAIL_LENGTH - 0.1f;
 
 	if (distance >= border) {
-
+		
+		// calculate the new helicopter location
 		float angle = atan2f(helicopterLocation[2], helicopterLocation[0]);
-
-		// calculate new heli location
 		helicopterLocation[0] = border * cosf(angle);
 		helicopterLocation[2] = border * sinf(angle);
 	}
@@ -1174,14 +1184,33 @@ void drawSkyBorder(void)
 	glPushMatrix();
 
 	// move upwards
-	glTranslated(0.0, SKY_HEIGHT, 0.0);
+	glTranslated(0.0, SKY_HEIGHT * 1.5, 0.0);
 
 	// rotate to verticle
 	glRotated(90, 1.0, 0.0, 0.0);
 
-	gluCylinder(cylinderQuadric, WORLD_RADIUS, WORLD_RADIUS, SKY_HEIGHT, 50, 50);
+	gluCylinder(cylinderQuadric, WORLD_RADIUS, WORLD_RADIUS, SKY_HEIGHT * 1.5, 50, 50);
 
 	glPopMatrix();
+}
+
+void drawHelipad(void)
+{
+	//renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	//glColor3fv(WHITE); //pale green -- better to have a const
+
+	//glBegin(GL_QUADS);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x, 0.0f, z);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x, 0.0f, z + GRID_SQUARE_SIZE);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z + GRID_SQUARE_SIZE);
+	//glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+	//glVertex3f(x + GRID_SQUARE_SIZE, 0.0f, z);
+	//glEnd();
+
 }
 
 void drawHelicopter()
