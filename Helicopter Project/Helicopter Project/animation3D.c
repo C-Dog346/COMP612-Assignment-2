@@ -287,8 +287,8 @@ float rotorAngle = 1.0f;
 
 // boat
 // base
-#define BOAT_BASE_SIZE 5.0f
-#define BOAT_CABIN_SIZE 2.0f
+#define BOAT_BASE_SIZE 7.5f
+#define BOAT_CABIN_SIZE 3.0f
 
 // dock
 #define DOCK_PLANK_SIZE 12.5f
@@ -714,8 +714,8 @@ void init(void)
 	glEnable(GL_FOG);
 
 	// define the color and density of the fog
-	GLfloat fogColor[4] = { 0.25f, 0.25f, 0.25f, 0.25f };
-	GLfloat fogDensity = 0.025f;
+	GLfloat fogColor[4] = { 0.2f, 0.2f, 0.2f, 0.2f };
+	GLfloat fogDensity = 0.05f;
 	// set the color of the fog
 	glFogfv(GL_FOG_COLOR, fogColor);
 	//set the fog mode to be exponential
@@ -1205,13 +1205,13 @@ void drawHelipad(void)
 	glBegin(GL_QUADS);
 
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.6f, 0.1f, -GRID_SIZE / 2 * 0.6f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.6);
+	glVertex3f(GRID_SIZE / 2 * 0.4f, 0.1f, -GRID_SIZE / 2 * 0.6f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.4, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.4f, 0.1f, -GRID_SIZE / 2 * 0.4f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.6, 0.1f, -GRID_SIZE / 2 * 0.4);
+	glVertex3f(GRID_SIZE / 2 * 0.6f, 0.1f, -GRID_SIZE / 2 * 0.4f);
 
 	glEnd();
 
@@ -1221,13 +1221,13 @@ void drawHelipad(void)
 	glBegin(GL_QUADS);
 
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.55, 0.11f, -GRID_SIZE / 2 * 0.55);
+	glVertex3f(GRID_SIZE / 2 * 0.55f, 0.11f, -GRID_SIZE / 2 * 0.55f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.55);
+	glVertex3f(GRID_SIZE / 2 * 0.53f, 0.11f, -GRID_SIZE / 2 * 0.55f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.45);
+	glVertex3f(GRID_SIZE / 2 * 0.53f, 0.11f, -GRID_SIZE / 2 * 0.45f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.55, 0.11f, -GRID_SIZE / 2 * 0.45);
+	glVertex3f(GRID_SIZE / 2 * 0.55f, 0.11f, -GRID_SIZE / 2 * 0.45f);
 
 	glEnd();
 
@@ -1235,13 +1235,13 @@ void drawHelipad(void)
 	glBegin(GL_QUADS);
 
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.51);
+	glVertex3f(GRID_SIZE / 2 * 0.53f, 0.11f, -GRID_SIZE / 2 * 0.51f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.51);
+	glVertex3f(GRID_SIZE / 2 * 0.47f, 0.11f, -GRID_SIZE / 2 * 0.51f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.49);
+	glVertex3f(GRID_SIZE / 2 * 0.47f, 0.11f, -GRID_SIZE / 2 * 0.49f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.53, 0.11f, -GRID_SIZE / 2 * 0.49);
+	glVertex3f(GRID_SIZE / 2 * 0.53f, 0.11f, -GRID_SIZE / 2 * 0.49f);
 
 	glEnd();
 	
@@ -1249,16 +1249,15 @@ void drawHelipad(void)
 	glBegin(GL_QUADS);
 
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.55);
+	glVertex3f(GRID_SIZE / 2 * 0.47f, 0.11f, -GRID_SIZE / 2 * 0.55f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.45, 0.11f, -GRID_SIZE / 2 * 0.55);
+	glVertex3f(GRID_SIZE / 2 * 0.45f, 0.11f, -GRID_SIZE / 2 * 0.55f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.45, 0.11f, -GRID_SIZE / 2 * 0.45);
+	glVertex3f(GRID_SIZE / 2 * 0.45f, 0.11f, -GRID_SIZE / 2 * 0.45f);
 	glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
-	glVertex3f(GRID_SIZE / 2 * 0.47, 0.11f, -GRID_SIZE / 2 * 0.45);
+	glVertex3f(GRID_SIZE / 2 * 0.47f, 0.11f, -GRID_SIZE / 2 * 0.45f);
 
 	glEnd();
-
 }
 
 void drawHelicopter(void)
@@ -1535,7 +1534,7 @@ void drawBoatCabin(void)
 	glPushMatrix();
 
 	// translate upwards
-	glTranslated(0.0, 3.0, 0.5);
+	glTranslated(0.0, BOAT_CABIN_SIZE * 1.5, BOAT_CABIN_SIZE * 0.333);
 
 	// scale base cube
 	glScaled(0.9, 0.8, 0.9);
@@ -1553,7 +1552,7 @@ void drawDock(void)
 	glPushMatrix();
 
 	// translate to side 
-	glTranslated(0.0, -0.1, GRID_SIZE / 2 * 0.6);
+	glTranslated(0.0, -0.1, GRID_SIZE / 2 * 0.2);
 
 	for (int i = 0; i < 8; i++)
 	{
