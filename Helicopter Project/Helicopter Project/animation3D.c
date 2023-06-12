@@ -18,6 +18,8 @@
 #include <freeglut.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
  /******************************************************************************
   * Animation & Timing Setup
@@ -206,8 +208,6 @@ void drawTopRotors(void);
 void drawBlade(int num);
 void drawTail(void);
 void drawTailRotors(void);
-void drawTailFin(void);
-void drawSpotLight(void);
 
 // hierarchical model functions to position and scale parts for boat
 void drawBoat(void);
@@ -222,13 +222,12 @@ void drawDock(void);
 void drawPlank(int num);
 void drawLamp(void);
 
+// trees
+void drawTrees(void);
+void drawTree(GLfloat x, GLfloat y, GLfloat z);
+
 // camera
 void updateCameraPos(void);
-
-// spotlight
-void setupSpotlight(void);
-
-
 
 /******************************************************************************
  * Animation-Specific Setup (Add your own definitions, constants, and globals here)
@@ -329,8 +328,8 @@ float rotorAngle = 1.0f;
 
 // boat
 // base
-#define BOAT_BASE_SIZE 7.5f
-#define BOAT_CABIN_SIZE 3.0f
+#define BOAT_BASE_SIZE 10.0f
+#define BOAT_CABIN_SIZE 4.0f
 
 // dock
 #define DOCK_PLANK_SIZE 12.5f
@@ -346,6 +345,9 @@ float rotorAngle = 1.0f;
 
 // initial y value for the helicopter centre 
 #define START_HEIGHT HELICOPTER_BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
+
+// number of trees
+#define NUMBER_OF_TREES 10
 
 // colours
 const GLfloat PALE_GREEN[4] = { 0.596f, 0.984f, 0.596f };
@@ -391,9 +393,16 @@ const float boatMoveSpeed = 5.0f;
 // lamp
 GLfloat lampLightPosition[] = { 0.0, 4.0, 0.0, 1.0 };
 
-// Test mesh object
+// Tree mesh variables
 meshObject* treeMesh;
 GLuint tree;
+
+typedef GLfloat trees[10];
+trees randomX;
+trees randomY;
+trees randomZ;
+
+
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -481,14 +490,7 @@ void display(void)
 	// draw the dock and lamp();
 	drawDock();
 
-	//textured object
-
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, whiteDiffuse);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, tree);
-	renderMeshObject(treeMesh);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_COLOR_MATERIAL);
+	drawTrees();
 
 	// swap the drawing buffers
 	glutSwapBuffers();
@@ -797,10 +799,6 @@ void init(void)
 	cylinderQuadric = gluNewQuadric();
 
 	//load assets
-	treeMesh = loadMeshObject("tree.obj");
-
-	tree = loadOBJPPM("P3grass.ppm");
-
 	grass = loadPPM("P3grass.ppm");
 	glGenTextures(1, &grassId);
 	glBindTexture(GL_TEXTURE_2D, grassId);
@@ -808,6 +806,21 @@ void init(void)
 	water = loadPPM("P3water.ppm");
 	glGenTextures(1, &waterId);
 	glBindTexture(GL_TEXTURE_2D, waterId);
+
+	treeMesh = loadMeshObject("tree.obj");
+	tree = loadOBJPPM("P3tree.ppm");
+
+	// initalise tree positions
+	for (int i = 0; i < NUMBER_OF_TREES; i++)
+	{
+		GLfloat treeX = -4.0 + (float)(rand()) / (float)(RAND_MAX / 8.0);
+		GLfloat treeZ = -4.0 + (float)(rand()) / (float)(RAND_MAX / 8.0);
+
+
+		randomX[i] = treeX;
+		randomY[i] = 0.05f;
+		randomZ[i] = treeZ;
+	}
 }
 
 /*
@@ -2040,6 +2053,30 @@ void drawLamp(void)
 
 	// turn off the emission
 	glMaterialfv(GL_FRONT, GL_EMISSION, zeroMaterial);
+
+	glPopMatrix();
+}
+
+void drawTrees(void)
+{
+	for (int i = 0; i < NUMBER_OF_TREES; i++)
+	{
+		drawTree(randomX[i], randomY[i], randomZ[i]);
+	}	
+}
+
+void drawTree(GLfloat x, GLfloat y, GLfloat z)
+{
+	glPushMatrix();
+
+	glTranslated(x, 0.05f, z);
+
+	//textured object
+	glEnable(GL_TEXTURE_2D);
+	glScalef(0.5, 0.5, 0.5);
+	glBindTexture(GL_TEXTURE_2D, tree);
+	renderMeshObject(treeMesh);
+	glDisable(GL_TEXTURE_2D);
 
 	glPopMatrix();
 }
