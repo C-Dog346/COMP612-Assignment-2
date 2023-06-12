@@ -143,8 +143,7 @@ void init(void);
 void think(void);
 void initLights(void);
 
-// origin and grid functions
-void drawOrigin(void);
+// grid function
 void drawGrid(void);
 
 // border
@@ -416,9 +415,6 @@ void display(void)
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],
 		helicopterLocation[0], helicopterLocation[1], helicopterLocation[2],
 		0, 1, 0);
-
-	// origin point
-	drawOrigin();
 
 	// draw the ground
 	drawGrid();
@@ -931,9 +927,6 @@ void initLights(void)
 
 	// Make GL normalize the normal vectors we supply.
 	glEnable(GL_NORMALIZE);
-
-	// Enable use of simple GL colours as materials.
-	//glEnable(GL_COLOR_MATERIAL);
 }
 
 void updateCameraPos(void)
@@ -1094,31 +1087,6 @@ void borderCollision(void)
 		helicopterLocation[0] = border * cosf(angle);
 		helicopterLocation[2] = border * sinf(angle);
 	}
-}
-
-void drawOrigin(void)
-{
-	glColor3f(0.0f, 1.0f, 1.0f);
-	glutWireSphere(0.1, 10, 10);
-
-	glBegin(GL_LINES);
-
-	//x axis -red
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(2.0f, 0.0f, 0.0f);
-
-	//y axis -green
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 2.0f, 0.0f);
-
-	//z axis - blue
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 2.0f);
-
-	glEnd();
 }
 
 /*
