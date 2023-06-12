@@ -13,6 +13,7 @@
  *
  ******************************************************************************/
 #define _CRT_SECURE_NO_WARNINGS
+#pragma warning( disable : 4244 ) 
 
 #include <Windows.h>
 #include <freeglut.h>
@@ -224,7 +225,7 @@ void drawLamp(void);
 
 // trees
 void drawTrees(void);
-void drawTree(GLfloat x, GLfloat y, GLfloat z);
+void drawTree(GLfloat x, GLfloat y, GLfloat z, GLfloat scale);
 
 // camera
 void updateCameraPos(void);
@@ -347,7 +348,7 @@ float rotorAngle = 1.0f;
 #define START_HEIGHT HELICOPTER_BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
 
 // number of trees
-#define NUMBER_OF_TREES 10
+#define NUMBER_OF_TREES 25
 
 // colours
 const GLfloat PALE_GREEN[4] = { 0.596f, 0.984f, 0.596f };
@@ -397,10 +398,11 @@ GLfloat lampLightPosition[] = { 0.0, 4.0, 0.0, 1.0 };
 meshObject* treeMesh;
 GLuint tree;
 
-typedef GLfloat trees[10];
+typedef GLfloat trees[NUMBER_OF_TREES];
 trees randomX;
 trees randomY;
 trees randomZ;
+trees randomScale;
 
 
 
@@ -813,13 +815,15 @@ void init(void)
 	// initalise tree positions
 	for (int i = 0; i < NUMBER_OF_TREES; i++)
 	{
-		GLfloat treeX = -4.0 + (float)(rand()) / (float)(RAND_MAX / 8.0);
-		GLfloat treeZ = -4.0 + (float)(rand()) / (float)(RAND_MAX / 8.0);
+		GLfloat treeX = ((float)rand() / RAND_MAX) * (30);
+		GLfloat treeZ = ((float)rand() / RAND_MAX) * (20);
+		GLfloat scale = ((float)rand() / RAND_MAX) * (1);
 
 
 		randomX[i] = treeX;
 		randomY[i] = 0.05f;
 		randomZ[i] = treeZ;
+		randomScale[i] = scale;
 	}
 }
 
@@ -2059,13 +2063,19 @@ void drawLamp(void)
 
 void drawTrees(void)
 {
+	glPushMatrix();
+
+	glTranslated(10.0f, 0.0f, -15.0f);
+
 	for (int i = 0; i < NUMBER_OF_TREES; i++)
 	{
-		drawTree(randomX[i], randomY[i], randomZ[i]);
+		drawTree(randomX[i], randomY[i], randomZ[i], randomScale[i]);
 	}	
+
+	glPopMatrix();
 }
 
-void drawTree(GLfloat x, GLfloat y, GLfloat z)
+void drawTree(GLfloat x, GLfloat y, GLfloat z, GLfloat scale)
 {
 	glPushMatrix();
 
@@ -2073,7 +2083,7 @@ void drawTree(GLfloat x, GLfloat y, GLfloat z)
 
 	//textured object
 	glEnable(GL_TEXTURE_2D);
-	glScalef(0.5, 0.5, 0.5);
+	glScalef(scale, scale, scale);
 	glBindTexture(GL_TEXTURE_2D, tree);
 	renderMeshObject(treeMesh);
 	glDisable(GL_TEXTURE_2D);
