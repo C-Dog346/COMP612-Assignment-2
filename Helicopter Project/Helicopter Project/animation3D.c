@@ -1269,7 +1269,7 @@ void drawHelicopter(void)
 	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,policeBlueDiffuse);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, policeBlueDiffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
 	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	gluSphere(sphereQuadric, HELICOPTER_BODY_RADIUS, 50, 50);
@@ -1434,7 +1434,7 @@ void drawTail(void)
 	glPushMatrix();
 
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,policeBlueDiffuse);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, policeBlueDiffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
 	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
