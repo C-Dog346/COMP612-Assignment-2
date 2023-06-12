@@ -143,8 +143,7 @@ void init(void);
 void think(void);
 void initLights(void);
 
-// origin and grid functions
-void drawOrigin(void);
+// grid function
 void drawGrid(void);
 
 // border
@@ -160,7 +159,6 @@ void drawSkidConnector(enum Side side);
 void drawSkid(enum Side side);
 void drawSkidEnding(enum Side xSide, enum Side zSide);
 void drawWindshield(void);
-void drawWindow(enum Side side);
 void drawTopRotors(void);
 void drawBlade(int num);
 void drawTail(void);
@@ -306,16 +304,35 @@ float rotorAngle = 1.0f;
 #define START_HEIGHT HELICOPTER_BODY_RADIUS + SKID_CONNECTOR_LENGTH + SKID_RADIUS
 
 // colours
-const GLfloat PALE_GREEN[3] = { 0.596f, 0.984f, 0.596f };
-const GLfloat BATMAN_GREY[3] = { 0.3f, 0.3f, 0.3f };
-const GLfloat BROWN[3] = { 0.545f, 0.27f, 0.0745f };
-const GLfloat POLICE_BLUE[3] = { 0.0f, 0.0f, 0.40f };
-const GLfloat LIGHT_CYAN[3] = { 0.58f, 1.0f, 1.0f };
-const GLfloat WHITE[3] = { 1.0f, 1.0f, 1.0f };
-const GLfloat RED[3] = { 1.0f, 0.0f, 0.0f };
-const GLfloat BLUE[3] = { 0.0f, 0.0f, 1.0f };
-const GLfloat YELLOW[3] = { 1.0f, 1.0f, 0.0f };
-const GLfloat BLACK[3] = { 0.0f, 0.0f, 0.0f };
+const GLfloat PALE_GREEN[4] = { 0.596f, 0.984f, 0.596f };
+const GLfloat GREY[4] = { 0.3f, 0.3f, 0.3f };
+const GLfloat BROWN[4] = { 0.545f, 0.27f, 0.0745f };
+const GLfloat POLICE_BLUE[4] = { 0.0f, 0.0f, 0.40f };
+const GLfloat LIGHT_CYAN[4] = { 0.58f, 1.0f, 1.0f };
+const GLfloat WHITE[4] = { 1.0f, 1.0f, 1.0f };
+const GLfloat RED[4] = { 1.0f, 0.0f, 0.0f };
+const GLfloat BLUE[4] = { 0.0f, 0.0f, 1.0f };
+const GLfloat YELLOW[4] = { 1.0f, 1.0f, 0.0f };
+const GLfloat BLACK[4] = { 0.0f, 0.0f, 0.0f };
+
+// materials
+const GLfloat zeroMaterial[4] = { 0.0, 0.0, 0.0, 1.0 };
+
+const GLfloat paleGreenDiffuse[4] = { 0.596f, 0.984f, 0.596f, 1.0f };
+const GLfloat greyDiffuse[4] = { 0.3f, 0.3f, 0.3, 1.0f };
+const GLfloat brownDiffuse[4] = { 0.545f, 0.27f, 0.0745f, 1.0f };
+const GLfloat policeBlueDiffuse[4] = { 0.0f, 0.0f, 0.40f, 1.0f };
+const GLfloat lightCyanDiffuse[4] = { 0.58f, 1.0f, 1.0f, 1.0f };
+const GLfloat whiteDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat redDiffuse[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+const GLfloat blueDiffuse[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+const GLfloat yellowDiffuse[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+const GLfloat blackDiffuse[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+
+// the degrees of shinnines
+GLfloat noShininess = 0.0;
+GLfloat highShininess = 100.0;
 
 // model animation variables (position, heading, speed (metres per second)) for the helicopter
 float helicopterLocation[] = { GRID_SIZE / 2 * 0.5, START_HEIGHT, -GRID_SIZE / 2 * 0.5 }; // X, Y, Z
@@ -398,9 +415,6 @@ void display(void)
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],
 		helicopterLocation[0], helicopterLocation[1], helicopterLocation[2],
 		0, 1, 0);
-
-	// origin point
-	drawOrigin();
 
 	// draw the ground
 	drawGrid();
@@ -704,9 +718,6 @@ void init(void)
 	// enable depth testing
 	glEnable(GL_DEPTH_TEST);
 
-	// set background color to be black
-	glClearColor(0, 0, 0, 1.0);
-
 	// Anything that relies on lighting or specifies normals must be initialised after initLights.
 	initLights();
 	
@@ -871,6 +882,7 @@ void initLights(void)
 
 	// Set up light parameters
 	GLfloat spotLight[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat lampLight[] = { 1.0, 1.0, 1.0, 1.0 };
 
 	float spotLightExponent = 5.0f;
 	float spotLightCutoff = 60.0f;
@@ -900,7 +912,7 @@ void initLights(void)
 	// Configure Light 2 (dock lamp).
 	glLightfv(GL_LIGHT2, GL_POSITION, lightPosition);
 	glLightfv(GL_LIGHT2, GL_AMBIENT, ambientLight);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, spotLight);
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, lampLight);
 	glLightfv(GL_LIGHT2, GL_SPECULAR, specularLight);
 
 	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, down);
@@ -915,9 +927,6 @@ void initLights(void)
 
 	// Make GL normalize the normal vectors we supply.
 	glEnable(GL_NORMALIZE);
-
-	// Enable use of simple GL colours as materials.
-	glEnable(GL_COLOR_MATERIAL);
 }
 
 void updateCameraPos(void)
@@ -1080,31 +1089,6 @@ void borderCollision(void)
 	}
 }
 
-void drawOrigin(void)
-{
-	glColor3f(0.0f, 1.0f, 1.0f);
-	glutWireSphere(0.1, 10, 10);
-
-	glBegin(GL_LINES);
-
-	//x axis -red
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(2.0f, 0.0f, 0.0f);
-
-	//y axis -green
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 2.0f, 0.0f);
-
-	//z axis - blue
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 2.0f);
-
-	glEnd();
-}
-
 /*
   A simple ground plane in the XZ plane with vertex normals specified for lighting
   the top face of the ground. The bottom face is not lit.
@@ -1114,7 +1098,10 @@ void drawGrid(void)
 {
 	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	glColor3fv(WHITE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, whiteDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -1181,7 +1168,10 @@ void drawSkyBorder(void)
 {
 	// calculate heli distance form origin
 
-	glColor3fv(BATMAN_GREY);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,greyDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1200,7 +1190,10 @@ void drawHelipad(void)
 {
 	renderFillEnabled ? glPolygonMode(GL_FRONT_AND_BACK, GL_FILL) : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	glColor3fv(WHITE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,whiteDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	// base
 	glBegin(GL_QUADS);
@@ -1216,7 +1209,10 @@ void drawHelipad(void)
 
 	glEnd();
 
-	glColor3fv(BLACK);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,blackDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	// "left" vert line
 	glBegin(GL_QUADS);
@@ -1272,7 +1268,10 @@ void drawHelicopter(void)
 	// rotate helicopter
 	glRotated(helicopterFacing, 0.0, 1.0, 0.0);
 
-	glColor3fv(POLICE_BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,policeBlueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	gluSphere(sphereQuadric, HELICOPTER_BODY_RADIUS, 50, 50);
 
 	// front windshield
@@ -1285,9 +1284,6 @@ void drawHelicopter(void)
 	// left and right skids
 	drawSkid(rightSide);
 	drawSkid(leftSide);
-
-	/*drawWindow(rightSide);
-	drawWindow(leftSide);*/
 
 	// Top rotors
 	drawTopRotors();
@@ -1302,7 +1298,10 @@ void drawWindshield(void)
 {
 	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
 
-	glColor3fv(LIGHT_CYAN);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,lightCyanDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1331,7 +1330,10 @@ void drawSkidConnector(enum Side side)
 {
 	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
 
-	glColor3fv(BROWN);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1354,7 +1356,10 @@ void drawSkid(enum Side side)
 {
 	renderFillEnabled ? gluQuadricDrawStyle(cylinderQuadric, GLU_FILL) : gluQuadricDrawStyle(cylinderQuadric, GLU_LINE);
 
-	glColor3fv(BROWN);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1381,19 +1386,6 @@ void drawSkidEnding(enum Side xSide, enum Side zSide)
 	gluSphere(sphereQuadric, SKID_ENDING_RADIUS, 50, 50);
 
 	glPopMatrix();
-}
-
-void drawWindow(enum Side side) {
-
-	glColor3fv(BATMAN_GREY);
-
-	glPushMatrix();
-
-
-	//	glutSolidCube(WINDSCREEN_);
-
-	glPopMatrix();
-
 }
 
 void drawTopRotors(void)
@@ -1441,7 +1433,10 @@ void drawTail(void)
 {
 	glPushMatrix();
 
-	glColor3fv(POLICE_BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,policeBlueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	// rotate to the back
 	glRotated(180, 1.0, 0.0, 0.0);
@@ -1464,7 +1459,10 @@ void drawTail(void)
 
 void drawTailRotors(void)
 {
-	glColor3fv(BROWN);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1511,7 +1509,10 @@ void drawBoat(void)
 
 void drawBoatBase(void)
 {
-	glColor3fv(BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,blueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1530,7 +1531,10 @@ void drawBoatBase(void)
 
 void drawBoatCabin(void)
 {
-	glColor3fv(RED);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,redDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1548,7 +1552,10 @@ void drawBoatCabin(void)
 
 void drawDock(void)
 {
-	glColor3fv(BROWN);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,brownDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 
 	glPushMatrix();
 
@@ -1586,13 +1593,17 @@ void drawPlank(int num)
 
 void drawLamp(void)
 {
+	renderFillEnabled ? gluQuadricDrawStyle(sphereQuadric, GLU_FILL) : gluQuadricDrawStyle(sphereQuadric, GLU_LINE);
 	glPushMatrix();
 
 	// translate to the top of the dock
 	glTranslated(0.0, 1.0, 0.0);
 
 	// draw the street light post
-	glColor3fv(PALE_GREEN);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,paleGreenDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	glScaled(0.05, 1.0, 0.05);
 	glutSolidCube(LAMP_POST_SIZE);
 
@@ -1604,7 +1615,10 @@ void drawLamp(void)
 	glTranslated(LAMP_CONNECTOR_SIZE / 4, LAMP_POST_SIZE * 0.7, 0.0);
 
 	// draw the street light lamp
-	glColor3fv(BLUE);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,blueDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	// rotate about the x so it is is horizontal
 	glRotated(90, 1.0, 0.0, 0.0);
 	glScaled(1.0, 0.3, 0.3);
@@ -1618,16 +1632,12 @@ void drawLamp(void)
 	glTranslated(LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, 0.0);
 
 	// draw the light bulb
-	glColor3fv(YELLOW);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,yellowDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	glutSolidSphere(LAMP_BULB_SIZE, 50, 50);
 
 	glPopMatrix();
 }
-
-
-
-
-
-
-
 /******************************************************************************/
