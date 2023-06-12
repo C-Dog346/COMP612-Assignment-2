@@ -409,7 +409,7 @@ float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
 
 // lamp
-GLfloat lampLightPosition[] = { 0.0, 4.0, 0.0, 1.0 };
+GLfloat lampLightPosition[] = { LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.2 - DOCK_PLANK_SIZE / 2, 1.0 };
 
 // Tree mesh variables
 meshObject* treeMesh;
@@ -2017,6 +2017,8 @@ void drawDock(void)
 
 void drawPlank(int num)
 {
+	glNormal3d(0, 1, 0);  // normal of the floor is pointing up
+
 	glPushMatrix();
 
 	// translate to side 
@@ -2040,7 +2042,7 @@ void drawLamp(void)
 	glPushMatrix();
 
 	// translate to the top of the dock
-	glTranslated(0.0, 1.0, 0.0);
+	glTranslated(0.0, 1.0, -DOCK_PLANK_SIZE / 2);
 
 	// draw the street light post
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,paleGreenDiffuse);
@@ -2055,7 +2057,7 @@ void drawLamp(void)
 	glPushMatrix();
 
 	// translate to the top of the street light post
-	glTranslated(LAMP_CONNECTOR_SIZE / 4, LAMP_POST_SIZE * 0.7, 0.0);
+	glTranslated(LAMP_CONNECTOR_SIZE / 4, LAMP_POST_SIZE * 0.7, -DOCK_PLANK_SIZE / 2);
 
 	// draw the street light lamp
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,blueDiffuse);
@@ -2072,7 +2074,7 @@ void drawLamp(void)
 	glPushMatrix();
 
 	// translate to the top of the street light lamp
-	glTranslated(LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, 0.0);
+	glTranslated(LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, -DOCK_PLANK_SIZE / 2);
 
 	// draw the light bulb
 	glMaterialfv(GL_FRONT, GL_EMISSION, yellowDiffuse);
