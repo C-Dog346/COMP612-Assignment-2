@@ -722,14 +722,11 @@ void init(void)
 	// enable depth testing
 	glEnable(GL_DEPTH_TEST);
 
-	// set background color to be black
-	glClearColor(0, 0, 0, 1.0);
-
 	// Anything that relies on lighting or specifies normals must be initialised after initLights.
 	initLights();
 	
 	//Enable use of fog
-	//glEnable(GL_FOG);
+	glEnable(GL_FOG);
 
 	// define the color and density of the fog
 	GLfloat fogColor[4] = { 0.2f, 0.2f, 0.2f, 0.2f };
@@ -1306,7 +1303,7 @@ void drawHelicopter(void)
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,policeBlueDiffuse);
 	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
-	glMaterialf(GL_FRONT, GL_SHININESS, highShininess);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
 	gluSphere(sphereQuadric, HELICOPTER_BODY_RADIUS, 50, 50);
 
 	// front windshield
