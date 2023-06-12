@@ -199,6 +199,14 @@ void borderCollision(void);
 // helipad
 void drawHelipad(void);
 
+// road
+void drawRoad(void);
+
+// building
+void drawBuildings(void);
+void drawBuilding(GLdouble x, GLdouble y, GLdouble z, float size, float height);
+void drawPyramid(float size, float height);
+
 // hierarchical model functions to position and scale parts for helicopter
 void drawHelicopter(void);
 void drawSkidConnector(enum Side side);
@@ -275,9 +283,11 @@ GLuint loadOBJPPM(char* filename);
 
 PPMImage water;
 PPMImage grass;
+PPMImage road;
 
 GLuint waterId;
 GLuint grassId;
+GLuint roadId;
 
 // rotor blade speed management
 float rotorSpeed = 750.0f;
@@ -349,6 +359,13 @@ float rotorAngle = 1.0f;
 
 // number of trees
 #define NUMBER_OF_TREES 25
+
+// buildings
+#define ROAD_BUILDING_SIZE 10.0f
+#define ROAD_BUILDING_HEIGHT 4.0f
+
+#define HELIPAD_BUILDING_SIZE 7.5f
+#define HELIPAD_BUILDING_HEIGHT 3.0f
 
 // colours
 const GLfloat PALE_GREEN[4] = { 0.596f, 0.984f, 0.596f };
@@ -492,7 +509,11 @@ void display(void)
 	// draw the dock and lamp();
 	drawDock();
 
+	// forest
 	drawTrees();
+
+	// buildings
+	drawBuildings();
 
 	// swap the drawing buffers
 	glutSwapBuffers();
@@ -808,6 +829,10 @@ void init(void)
 	water = loadPPM("P3water.ppm");
 	glGenTextures(1, &waterId);
 	glBindTexture(GL_TEXTURE_2D, waterId);
+
+	road = loadPPM("P3road.ppm");
+	glGenTextures(1, &roadId);
+	glBindTexture(GL_TEXTURE_2D, roadId);
 
 	treeMesh = loadMeshObject("tree.obj");
 	tree = loadOBJPPM("P3tree.ppm");
@@ -1549,6 +1574,9 @@ void drawGrid(void)
 	}
 
 	glDeleteTextures(1, &grassId);
+	
+	// road
+	drawRoad();
 
 	// Specify the texture image
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water.width, water.height, 0, GL_RGB, GL_UNSIGNED_BYTE, water.data);
@@ -2089,5 +2117,103 @@ void drawTree(GLfloat x, GLfloat y, GLfloat z, GLfloat scale)
 	glDisable(GL_TEXTURE_2D);
 
 	glPopMatrix();
+}
+
+void drawRoad(void)
+{
+	// Specify the texture image
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, road.width, road.height, 0, GL_RGB, GL_UNSIGNED_BYTE, road.data);
+
+	float origin = -GRID_SIZE / 2.0f + 20.0f;
+
+	for (float z = origin; z < 0; z += GRID_SQUARE_SIZE)
+	{
+		for (float x = -3.0f; x < 3.0f; x += GRID_SQUARE_SIZE)
+		{
+			glBegin(GL_QUADS);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(0.0f, 1.0f); // coord for texture
+			glVertex3f(x, 0.1f, z);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(1.0f, 1.0f); // coord for texture
+			glVertex3f(x, 0.1f, z + GRID_SQUARE_SIZE);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(1.0f, 0.0f); // coord for texture
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.1f, z + GRID_SQUARE_SIZE);
+			glNormal3d(0.0, 1.0, 0.0); //set normal to enable by-vertex lighting on ground
+			glTexCoord2d(0.0f, 0.0f); // coord for texture
+			glVertex3f(x + GRID_SQUARE_SIZE, 0.1f, z);
+			glEnd();
+		}
+	}
+
+	glDeleteTextures(1, &roadId);
+}
+
+void drawBuildings(void)
+{
+	glPushMatrix();
+
+	// building at the end of the road
+	drawBuilding(0.0, 0.0, -GRID_SIZE / 2.0 + ROAD_BUILDING_SIZE, ROAD_BUILDING_SIZE, ROAD_BUILDING_HEIGHT);
+
+	// building by helipad
+	drawBuilding(GRID_SIZE / 2 * 0.25f, 0.0, -GRID_SIZE / 2 * 0.5, HELIPAD_BUILDING_SIZE, HELIPAD_BUILDING_HEIGHT);
+	
+	glPopMatrix();
+}
+
+void drawBuilding(GLdouble x, GLdouble y, GLdouble z, float size, float height)
+{
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, lightCyanDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
+	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
+
+	glPushMatrix();
+
+	glTranslated(x, y, z);
+
+	// cube in the middle of rotors
+	glutSolidCube(size);
+
+	glPopMatrix();
+
+	glPushMatrix();
+
+	glTranslated(x, size /2, z);
+
+	drawPyramid(size, height);
+
+	glPopMatrix();
+}
+
+// Function to draw the pyramid
+void drawPyramid(float size, float height) {
+	size /= 2;
+	
+	glBegin(GL_TRIANGLES);
+	
+	// Front face
+	glVertex3f(0.0, height, 0.0); // Top vertex
+	glVertex3f(-size, 0.0, size); // Bottom left vertex
+	glVertex3f(size, 0.0, size); // Bottom right vertex
+
+	// Right face
+	glVertex3f(0.0, height, 0.0); // Top vertex
+	glVertex3f(size, 0.0, size); // Bottom left vertex
+	glVertex3f(size, 0.0, -size); // Bottom right vertex
+
+	// Back face
+	glVertex3f(0.0, height, 0.0); // Top vertex
+	glVertex3f(size, 0.0, -size); // Bottom left vertex
+	glVertex3f(-size, 0.0, -size); // Bottom right vertex
+
+	// Left face
+	glVertex3f(0.0, height, 0.0); // Top vertex
+	glVertex3f(-size, 0.0, -size); // Bottom left vertex
+	glVertex3f(-size, 0.0, size); // Bottom right vertex
+
+	glEnd();
 }
 /******************************************************************************/
