@@ -12,6 +12,7 @@
  * included in the animationalcontrol.c template. There are no other changes.
  *
  ******************************************************************************/
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <Windows.h>
 #include <freeglut.h>
@@ -133,6 +134,48 @@ void specialKeyPressed(int key, int x, int y);
 void keyReleased(unsigned char key, int x, int y);
 void specialKeyReleased(int key, int x, int y);
 void idle(void);
+
+/******************************************************************************
+ * Mesh Object Loader Setup and Prototypes
+ ******************************************************************************/
+
+typedef struct {
+	GLfloat x;
+	GLfloat y;
+	GLfloat z;
+} vec3d;
+
+typedef struct {
+	GLfloat x;
+	GLfloat y;
+} vec2d;
+
+typedef struct {
+	int vertexIndex;	// Index of this vertex in the object's vertices array
+	int texCoordIndex; // Index of the texture coordinate for this vertex in the object's texCoords array
+	int normalIndex;	// Index of the normal for this vertex in the object's normals array
+} meshObjectFacePoint;
+
+typedef struct {
+	int pointCount;
+	meshObjectFacePoint* points;
+} meshObjectFace;
+
+typedef struct {
+	int vertexCount;
+	vec3d* vertices;
+	int texCoordCount;
+	vec2d* texCoords;
+	int normalCount;
+	vec3d* normals;
+	int faceCount;
+	meshObjectFace* faces;
+} meshObject;
+
+meshObject* loadMeshObject(char* fileName);
+void renderMeshObject(meshObject* object);
+void initMeshObjectFace(meshObjectFace* face, char* faceData, int faceDataLength);
+void freeMeshObject(meshObject* object);
 
 /******************************************************************************
  * Animation-Specific Function Prototypes (add your own here)
@@ -319,7 +362,7 @@ const GLfloat BLACK[4] = { 0.0f, 0.0f, 0.0f };
 const GLfloat zeroMaterial[4] = { 0.0, 0.0, 0.0, 1.0 };
 
 const GLfloat paleGreenDiffuse[4] = { 0.596f, 0.984f, 0.596f, 1.0f };
-const GLfloat greyDiffuse[4] = { 0.3f, 0.3f, 0.3, 1.0f };
+const GLfloat greyDiffuse[4] = { 0.3f, 0.3f, 0.3f, 1.0f };
 const GLfloat brownDiffuse[4] = { 0.545f, 0.27f, 0.0745f, 1.0f };
 const GLfloat policeBlueDiffuse[4] = { 0.0f, 0.0f, 0.40f, 1.0f };
 const GLfloat lightCyanDiffuse[4] = { 0.58f, 1.0f, 1.0f, 1.0f };
@@ -346,7 +389,10 @@ const float boatMoveSpeed = 5.0f;
 
 // lamp
 GLfloat lampLightPosition[] = { 0.0, 4.0, 0.0, 1.0 };
-//{ LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.6, 1.0 };
+
+// Test mesh object
+meshObject* treeMesh;
+GLuint treeTexture;
 
 /******************************************************************************
  * Entry Point (don't put anything except the main function here)
@@ -740,7 +786,9 @@ void init(void)
 	//create the quadric for drawing the cylinder
 	cylinderQuadric = gluNewQuadric();
 
-	// Load PPM image
+	//load assets
+	treeMesh = loadMeshObject("tree.obj");
+
 	grass = loadPPM("P3grass.ppm");
 	glGenTextures(1, &grassId);
 	glBindTexture(GL_TEXTURE_2D, grassId);
@@ -929,6 +977,81 @@ void initLights(void)
 	glEnable(GL_NORMALIZE);
 }
 
+void initMeshObjectFace(meshObjectFace* face, char* faceData, int maxFaceDataLength) {
+	int maxPoints = 0;
+	int inWhitespace = 0;
+	const char* delimiter = " ";
+	char* token = NULL;
+	char* context = NULL;
+
+	// Do a quick scan of the input string to determine the maximum number of points in this face by counting
+	// blocks of whitespace (each point must be preceded by at least one space). Note that we may end up with
+	// fewer points than this if one or more prove to be invalid.
+	for (int i = 0; i < maxFaceDataLength; i++)
+	{
+		char c = faceData[i];
+		if (c == '\0') {
+			break;
+		}
+		else if ((c == ' ') || (c == '\t')) {
+			if (!inWhitespace) {
+				inWhitespace = 1;
+				maxPoints++;
+			}
+		}
+		else {
+			inWhitespace = 0;
+		}
+	}
+
+	// Parse the input string to extract actual face points (if we're expecting any).
+	face->pointCount = 0;
+	if (maxPoints > 0) {
+		face->points = malloc(sizeof(meshObjectFacePoint) * maxPoints);
+
+		token = strtok_s(faceData, delimiter, &context);
+		while ((token != NULL) && (face->pointCount < maxPoints)) {
+			meshObjectFacePoint parsedPoint = { 0, 0, 0 }; // At this point we're working with 1-based indices from the OBJ file.
+
+			if (strcmp(token, "f") != 0) {
+				// Attempt to parse this face point in the format "v/t[/n]" (vertex, texture, and optional normal).
+				if (sscanf_s(token, "%d/%d/%d", &parsedPoint.vertexIndex, &parsedPoint.texCoordIndex, &parsedPoint.normalIndex) < 2) {
+					// That didn't work out: try parsing in the format "v[//n]" instead (vertex, no texture, and optional normal).
+					sscanf_s(token, "%d//%d", &parsedPoint.vertexIndex, &parsedPoint.normalIndex);
+				}
+
+				// If we parsed a valid face point (i.e. one that at least contains the index of a vertex), add it.
+				if (parsedPoint.vertexIndex > 0) {
+					// Adjust all indices down by one: Wavefront OBJ uses 1-based indices, but our arrays are 0-based.
+					parsedPoint.vertexIndex--;
+
+					// Discard any negative texture coordinate or normal indices while adjusting them down by one.
+					parsedPoint.texCoordIndex = (parsedPoint.texCoordIndex > 0) ? parsedPoint.texCoordIndex - 1 : -1;
+					parsedPoint.normalIndex = (parsedPoint.normalIndex > 0) ? parsedPoint.normalIndex - 1 : -1;
+
+					memcpy_s(&face->points[face->pointCount], sizeof(meshObjectFacePoint), &parsedPoint, sizeof(meshObjectFacePoint));
+					face->pointCount++;
+				}
+			}
+
+			token = strtok_s(NULL, delimiter, &context);
+		}
+
+		// If we have fewer points than expected, free the unused memory.
+		if (face->pointCount == 0) {
+			free(face->points);
+			face->points = NULL;
+		}
+		else if (face->pointCount < maxPoints) {
+			realloc(face->points, sizeof(meshObjectFacePoint) * face->pointCount);
+		}
+	}
+	else
+	{
+		face->points = NULL;
+	}
+}
+
 void updateCameraPos(void)
 {
 	// camera position if in debug mode
@@ -1074,6 +1197,94 @@ PPMImage loadPPM(char* filename) // loads a PPM image
 	return image;
 }
 
+meshObject* loadMeshObject(char* fileName)
+{
+	FILE* inFile;
+	meshObject* object;
+	char line[512];					// Line currently being parsed 
+	char keyword[10];				// Keyword currently being parsed
+	int currentVertexIndex = 0;		// 0-based index of the vertex currently being parsed
+	int currentTexCoordIndex = 0;	// 0-based index of the texure coordinate currently being parsed
+	int currentNormalIndex = 0;		// 0-based index of the normal currently being parsed
+	int currentFaceIndex = 0;		// 0-based index of the face currently being parsed
+
+	inFile = fopen(fileName, "r");
+
+	if (inFile == NULL) {
+		return NULL;
+	}
+
+	// Allocate and initialize a new Mesh Object.
+	object = malloc(sizeof(meshObject));
+	object->vertexCount = 0;
+	object->vertices = NULL;
+	object->texCoordCount = 0;
+	object->texCoords = NULL;
+	object->normalCount = 0;
+	object->normals = NULL;
+	object->faceCount = 0;
+	object->faces = NULL;
+
+	// Pre-parse the file to determine how many vertices, texture coordinates, normals, and faces we have.
+	while (fgets(line, (unsigned)_countof(line), inFile))
+	{
+		if (sscanf_s(line, "%9s", keyword, (unsigned)_countof(keyword)) == 1) {
+			if (strcmp(keyword, "v") == 0) {
+				object->vertexCount++;
+			}
+			else if (strcmp(keyword, "vt") == 0) {
+				object->texCoordCount++;
+			}
+			else if (strcmp(keyword, "vn") == 0) {
+				object->normalCount++;
+			}
+			else if (strcmp(keyword, "f") == 0) {
+				object->faceCount++;
+			}
+		}
+	}
+
+	if (object->vertexCount > 0)object->vertices = malloc(sizeof(vec3d) * object->vertexCount);
+	if (object->texCoordCount > 0) object->texCoords = malloc(sizeof(vec2d) * object->texCoordCount);
+	if (object->normalCount > 0) object->normals = malloc(sizeof(vec3d) * object->normalCount);
+	if (object->faceCount > 0) object->faces = malloc(sizeof(meshObjectFace) * object->faceCount);
+
+	// Parse the file again, reading the actual vertices, texture coordinates, normals, and faces.
+	rewind(inFile);
+
+	while (fgets(line, (unsigned)_countof(line), inFile))
+	{
+		if (sscanf_s(line, "%9s", keyword, (unsigned)_countof(keyword)) == 1) {
+			if (strcmp(keyword, "v") == 0) {
+				vec3d vertex = { 0, 0, 0 };
+				sscanf_s(line, "%*s %f %f %f", &vertex.x, &vertex.y, &vertex.z);
+				memcpy_s(&object->vertices[currentVertexIndex], sizeof(vec3d), &vertex, sizeof(vec3d));
+				currentVertexIndex++;
+			}
+			else if (strcmp(keyword, "vt") == 0) {
+				vec2d texCoord = { 0, 0 };
+				sscanf_s(line, "%*s %f %f", &texCoord.x, &texCoord.y);
+				memcpy_s(&object->texCoords[currentTexCoordIndex], sizeof(vec2d), &texCoord, sizeof(vec2d));
+				currentTexCoordIndex++;
+			}
+			else if (strcmp(keyword, "vn") == 0) {
+				vec3d normal = { 0, 0, 0 };
+				sscanf_s(line, "%*s %f %f %f", &normal.x, &normal.y, &normal.z);
+				memcpy_s(&object->normals[currentNormalIndex], sizeof(vec3d), &normal, sizeof(vec3d));
+				currentNormalIndex++;
+			}
+			else if (strcmp(keyword, "f") == 0) {
+				initMeshObjectFace(&(object->faces[currentFaceIndex]), line, _countof(line));
+				currentFaceIndex++;
+			}
+		}
+	}
+
+	fclose(inFile);
+
+	return object;
+}
+
 void borderCollision(void)
 {
 	float border = WORLD_RADIUS - HELICOPTER_BODY_RADIUS - TAIL_LENGTH;
@@ -1161,6 +1372,7 @@ void drawGrid(void)
 		}
 	}
 
+	glDisable(GL_TEXTURE_2D);
 	glDeleteTextures(1, &waterId);
 }
 
@@ -1632,11 +1844,16 @@ void drawLamp(void)
 	glTranslated(LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, 0.0);
 
 	// draw the light bulb
+	glMaterialfv(GL_FRONT, GL_EMISSION, yellowDiffuse);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE,yellowDiffuse);
 	glMaterialfv(GL_FRONT, GL_AMBIENT, zeroMaterial);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, zeroMaterial);
 	glMaterialf(GL_FRONT, GL_SHININESS, noShininess);
+
 	glutSolidSphere(LAMP_BULB_SIZE, 50, 50);
+
+	// turn off the emission
+	glMaterialfv(GL_FRONT, GL_EMISSION, zeroMaterial);
 
 	glPopMatrix();
 }
