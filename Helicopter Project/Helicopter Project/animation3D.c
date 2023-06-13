@@ -409,7 +409,7 @@ float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
 
 // lamp
-const float lampLightPosition[] = { LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.2 - DOCK_PLANK_SIZE / 2, 1.0 };
+const float lampLightPosition[] = { LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65f, GRID_SIZE / 2 * 0.2f - DOCK_PLANK_SIZE / 2, 1.0f };
 
 // Tree mesh variables
 meshObject* treeMesh;
@@ -851,7 +851,6 @@ void init(void)
 		randomZ[i] = treeZ;
 		randomScale[i] = scale;
 	}
-	printf("%f %f %", randomX[1], randomY[1], randomZ[1]);
 }
 
 /*
