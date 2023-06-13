@@ -290,7 +290,7 @@ GLuint grassId;
 GLuint roadId;
 
 // rotor blade speed management
-float rotorSpeed = 750.0f;
+float rotorSpeed = 0.0f;
 float rotorAngle = 1.0f;
 
 // border values
@@ -409,7 +409,7 @@ float boatFacing = 0.0f;
 const float boatMoveSpeed = 5.0f;
 
 // lamp
-GLfloat lampLightPosition[] = { LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.2 - DOCK_PLANK_SIZE / 2, 1.0 };
+const float lampLightPosition[] = { LAMP_CONNECTOR_SIZE / 2, LAMP_POST_SIZE * 0.65, GRID_SIZE / 2 * 0.2 - DOCK_PLANK_SIZE / 2, 1.0 };
 
 // Tree mesh variables
 meshObject* treeMesh;
@@ -517,7 +517,6 @@ void display(void)
 
 	// swap the drawing buffers
 	glutSwapBuffers();
-
 }
 
 /*
@@ -838,6 +837,8 @@ void init(void)
 	tree = loadOBJPPM("P3tree.ppm");
 
 	// initalise tree positions
+	srand(time(NULL));
+
 	for (int i = 0; i < NUMBER_OF_TREES; i++)
 	{
 		GLfloat treeX = ((float)rand() / RAND_MAX) * (30);
@@ -850,6 +851,7 @@ void init(void)
 		randomZ[i] = treeZ;
 		randomScale[i] = scale;
 	}
+	printf("%f %f %", randomX[1], randomY[1], randomZ[1]);
 }
 
 /*
@@ -990,7 +992,7 @@ void initLights(void)
 	float spotLightCutoff = 60.0f;
 
 	float lampLightExponent = 5.0f;
-	float lampLightCutoff = 20.0f;
+	float lampLightCutoff = 60.0f;
 
 	// Configure global ambient lighting.
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
